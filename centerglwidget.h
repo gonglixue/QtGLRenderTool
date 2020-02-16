@@ -21,6 +21,8 @@
 #include <QVector3D>
 #include <QVector2D>
 
+#include <QDebug>
+
 #include "mymesh.h"
 #include "mycamera.h"
 
@@ -34,20 +36,31 @@ public:
     QString vShaderFile;
     QString fShaderFile;
     void cleanup();
-    void loadMeshFromFile(QFile file);
+    void loadMeshFromFile(QFile &file);
 
     MyCamera camera;
 
+    static int qNormalizeAngle(int angle)
+    {
+        while(angle < 0)
+            angle += 360 * 16;
+        while(angle > 360*16)
+            angle -= 360 * 16;
+        return angle;
+    }
+
 protected:
     void initializeGL();
-    // void paintGL();
+    void paintGL();
     void resizeGL(int width, int height);
 
-    QSize minimumSizeHint() const;
+    // QSize minimumSizeHint() const;
     QSize sizeHint() const;
+
     void mousePressEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
     void wheelEvent(QWheelEvent* event);
+    void keyPressEvent(QKeyEvent *event);
 
 private:
     QOpenGLShaderProgram* program;
@@ -59,6 +72,34 @@ private:
     // transform
     QMatrix4x4 projection;
 
+    // render config
+    int xRotAngle;
+    int yRotAngle;
+    int zRotAngle;
+    QPoint mouseLastPos;
+    QVector3D objectColor;
+    QVector3D lightColor;
+    QVector3D lightPos;
+
+    // gl var
+    QOpenGLBuffer VBO;
+    QOpenGLBuffer EBO;
+    QOpenGLVertexArrayObject VAO;
+
+    void setupVertexAttribs();
+
+public slots:
+    void setXRotation(int angle);
+    void setYRotation(int angle);
+    void setZRotation(int angle);
+    void setLightX(GLfloat light_x);
+    void setLightY(GLfloat light_y);
+    void setLightZ(GLfloat light_z);
+
+signals:
+    void xRotationChanged(int angle);
+    void yRotationChanged(int angle);
+    void zRotationChanged(int angle);
 
 };
 

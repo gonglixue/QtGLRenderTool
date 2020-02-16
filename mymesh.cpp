@@ -4,8 +4,10 @@
 using namespace std;
 
 
-void MyMesh::loadOBJ(QFile file)
+void MyMesh::loadOBJ(QFile& file)
 {
+    qDebug() << "enter MyMesh::LoadOBJ";
+    cout << "enter MyMesh::loadOBJ" << endl;
     QTextStream in(&file);
 
     int vCount=0, vnCount=0, vtCount=0;
@@ -19,7 +21,7 @@ void MyMesh::loadOBJ(QFile file)
         }
 
         if(line[0] == '#'){
-            cout << line;
+            cout << line.toStdString();
         }
         else if(line.left(2) == "v "){
             line.remove(0, 1);
@@ -34,18 +36,18 @@ void MyMesh::loadOBJ(QFile file)
             vCount++;
 
             {
-                if (x < min_vert.x)
-                    min_vert.x = x;
-                if (x > max_vert.x)
-                    max_vert.x = x;
-                if (y < min_vert.y)
-                    min_vert.y = y;
-                if (y > max_vert.y)
-                    max_vert.y = y;
-                if (z < min_vert.z)
-                    min_vert.z = z;
-                if (z > max_vert.z)
-                    max_vert.z = z;
+                if (x < min_vert.x())
+                    min_vert.setX(x);
+                if (x > max_vert.x())
+                    max_vert.setX(x);
+                if (y < min_vert.y())
+                    min_vert.setY(y);
+                if (y > max_vert.y())
+                    max_vert.setY(y);
+                if (z < min_vert.z())
+                    min_vert.setZ(z);
+                if (z > max_vert.z())
+                    max_vert.setZ(z);
             }
         }
         else if(line.left(2) == "vn")
@@ -80,12 +82,12 @@ void MyMesh::loadOBJ(QFile file)
                 // TODO: texture coordinates
                 QString aVert = face_index[i];
                 QStringList  aVert_index = aVert.split('/');
-                int v_index = aVert_index[0].toInt() - 1;
+                GLuint v_index = aVert_index[0].toInt() - 1;
                 //int t_index = aVert_index[1].toInt();
-                int n_index = aVert_index[2].toInt() - 1;
+                GLuint n_index = aVert_index[2].toInt() - 1;
 
                 if(v_index != n_index){
-                    qDebug() << "v_index != n_index";
+                    cout << "v_index != n_index";
                 }
                 else{
                     //qDebug() << n_index << "/";
@@ -102,27 +104,29 @@ void MyMesh::loadOBJ(QFile file)
     cout << "load obj count" << vCount << ", " << vnCount;
     file.close();
 
+    // TODO: normalize
+
 }
 
-void MyMesh::normalize(float length, QVector3D center)
+void MyMesh::normalize(float length, QVector3D& center)
 {
-    float scale = fmax(max.x-min.x, max.y-min.y);
-    scale = fmax(scale, max.z - min.z);
+    float scale = fmax(max_vert.x() - min_vert.x(), max_vert.y() - min_vert.y());
+    scale = fmax(scale, max_vert.z() - min_vert.z());
     scale = 1.0 / scale * length;
 
     for(int i=0;i<vertices.size();i++)
     {
-        vertices[i] = scale * (this->vertices[i] - center);
+        vertices[i].Position = scale * (this->vertices[i].Position - center);
     }
 
     max_vert = scale * (max_vert - center);
     min_vert = scale * (min_vert - center);
 }
 
-void MyMesh::set_center(QVector3D center)
+void MyMesh::set_center(QVector3D& center)
 {
     for(int i=0;i<vertices.size();i++)
     {
-        vertices[i] = (this->vertices[i] - center);
+        vertices[i].Position = (this->vertices[i].Position - center);
     }
 }

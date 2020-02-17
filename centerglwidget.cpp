@@ -1,13 +1,13 @@
 ﻿#include "centerglwidget.h"
 
-CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QVector3D(0, 1.5f, 6.0f)),
+CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QVector3D(0, 0.5f, 5.0f)),
     VBO(QOpenGLBuffer::VertexBuffer), EBO(QOpenGLBuffer::IndexBuffer)
 {
     screenHeight = 500;
     screenHeight = 500;
 
-    vShaderFile = "F:/Documents/QtProject/QtGLRenderTool/gooch.vert";
-    fShaderFile = "F:/Documents/QtProject/QtGLRenderTool/gooch.frag";
+    vShaderFile = "F:/Documents/QtProject/QtGLRenderTool/basiclambert.vert";
+    fShaderFile = "F:/Documents/QtProject/QtGLRenderTool/basiclambert.frag";
 
     qDebug() << "vertex shader path: " << vShaderFile;
     qDebug() << "fragment shader path: " << fShaderFile;
@@ -16,9 +16,16 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     objectColor = QVector3D(0.9f, 0.9f, 0.9f);
     lightColor = QVector3D(1.0f, 1.0f, 1.0f);
 
+    arcball = false;
     xRotAngle = 0;
     yRotAngle = 0;
     zRotAngle = 0;
+    model_scale = 1.0;
+    model.setToIdentity();
+    model.rotate(xRotAngle, QVector3D(1, 0, 0));
+    model.rotate(yRotAngle, QVector3D(0, 1, 0));
+    model.rotate(zRotAngle, QVector3D(0, 0, 1));
+    model.scale(model_scale);
 
     program = new QOpenGLShaderProgram;
 }
@@ -41,9 +48,9 @@ void CenterGLWidget::loadMeshFromFile(QFile &file)
     qDebug() << "begin CenterGLWidget::loadMeshFromFile";
     this->mesh.loadOBJ(file);
     QVector3D c(0.0f, 0.0f, 0.3f);
-    //this->mesh.normalize(1.0, c);
+    this->mesh.normalize(1.0, c);
     setupVertexAttribs();
-    // update();
+    update();
 }
 
 void CenterGLWidget::initializeGL()
@@ -115,6 +122,7 @@ void CenterGLWidget::setupVertexAttribs()
     // TODO: TEXCOORDS
 }
 
+/*
 void CenterGLWidget::paintGL()
 {
     qDebug() << "paintGL";
@@ -162,8 +170,9 @@ void CenterGLWidget::paintGL()
     //qDebug() << "draw ok";
     program->release();
 }
+*/
 
-/*
+
 void CenterGLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -178,35 +187,62 @@ void CenterGLWidget::paintGL()
     qDebug() << "draw";
     QOpenGLVertexArrayObject::Binder vaoBinder(&this->VAO);
     
-    QMatrix4x4 model;
-    model.setToIdentity();
-    // TODO: model transformation
+//    QMatrix4x4 model;
+//    model.setToIdentity();
+//    model.rotate(xRotAngle, QVector3D(1, 0, 0));
+//    model.rotate(yRotAngle, QVector3D(0, 1, 0));
+//    model.rotate(zRotAngle, QVector3D(0, 0, 1));
+//    model.scale(model_scale);
+
+    // arcball
+    QMatrix4x4 view_mat = this->camera.GetViewMatrix();
+    if(mouseLastPos != mouseCurPos) // TODO: check `!=` overload
+    {
+        qDebug() << "paintGL::arcball active";
+        QVector3D va = getArcballVector(mouseLastPos.x(), mouseLastPos.y());
+        QVector3D vb = getArcballVector(mouseCurPos.x(), mouseCurPos.y());
+        qDebug() << va;
+        qDebug() << vb;
+
+        float dot_va_vb = QVector3D::dotProduct(va, vb); // TODO: check static
+        float angle = 30.0f * acosf(3.0f < dot_va_vb ? 3.0f : dot_va_vb);
+
+        qDebug() << "paintGL::arcball active " << angle;
+
+        QVector3D axis_in_camera_coord = QVector3D::crossProduct(va, vb);
+        QMatrix4x4 camera2object =  (model).inverted();
+        QVector3D axis_in_object_coord = camera2object * axis_in_camera_coord;
+
+        model.rotate(angle, axis_in_object_coord);  // TODO: check state accumulate
+
+        mouseLastPos = mouseCurPos;
+    }
     
     this->program->bind();
     GLuint loc_model = program->uniformLocation("model");
     GLuint loc_view = program->uniformLocation("view");
     GLuint loc_projection = program->uniformLocation("projection");
 
-//    GLuint loc_lightPos = program->uniformLocation("lightPos");
-//    GLuint loc_viewPos = program->uniformLocation("viewPos");
-//    GLuint loc_lightColor = program->uniformLocation("lightColor");
-//    GLuint loc_objColor = program->uniformLocation("objectColor");
+    GLuint loc_lightPos = program->uniformLocation("lightPos");
+    GLuint loc_viewPos = program->uniformLocation("viewPos");
+    GLuint loc_lightColor = program->uniformLocation("lightColor");
+    GLuint loc_objColor = program->uniformLocation("objectColor");
 
     program->setUniformValue(loc_model, model);
-    program->setUniformValue(loc_view, this->camera.GetViewMatrix());
+    program->setUniformValue(loc_view, view_mat);
     program->setUniformValue(loc_projection, this->projection);
 
-//    program->setUniformValue(loc_lightPos, this->lightPos);
-//    program->setUniformValue(loc_viewPos, this->camera.Position);
-//    program->setUniformValue(loc_lightColor, this->lightColor);
-//    program->setUniformValue(loc_objColor, this->objectColor);
+    program->setUniformValue(loc_lightPos, this->lightPos);
+    program->setUniformValue(loc_viewPos, this->camera.Position);
+    program->setUniformValue(loc_lightColor, this->lightColor);
+    program->setUniformValue(loc_objColor, this->objectColor);
 
     glDrawElements(GL_TRIANGLES, this->mesh.indices.size(), GL_UNSIGNED_INT, 0);
 
     program->release();
 
 }
-*/
+
 
 void CenterGLWidget::resizeGL(int w, int h)
 {
@@ -272,26 +308,27 @@ QSize CenterGLWidget::sizeHint() const
 
 void CenterGLWidget::mousePressEvent(QMouseEvent *event)
 {
+    //qDebug() << "press";
     this->mouseLastPos = event->pos();
+    this->mouseCurPos = event->pos();
+    arcball = true;
+}
+
+void CenterGLWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    arcball = false;
 }
 
 void CenterGLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    int dx = event->x() - mouseLastPos.x();
-    int dy = event->y() - mouseLastPos.y();
-    if(event->button() & Qt::LeftButton)
+    if(arcball)
     {
-        qDebug() << "Mouse Event";
-        setXRotation(xRotAngle + 8*dy);
-        setYRotation(yRotAngle + 8*dx);
-    }
-    else if(event->button() & Qt::RightButton){
-        setXRotation(xRotAngle + 8*dy);
-        setZRotation(zRotAngle + 8*dx);
+        // qDebug() << "Mouse Event Left";
+        this->mouseCurPos = event->pos();
+        update();
+        // qDebug() << "move";
     }
 
-    mouseLastPos = event->pos();
-    update();
 }
 
 void CenterGLWidget::wheelEvent(QWheelEvent *event)
@@ -310,4 +347,20 @@ void CenterGLWidget::keyPressEvent(QKeyEvent *event)
     }
 
     update();
+}
+
+QVector3D CenterGLWidget::getArcballVector(int x, int y)
+{
+    QVector3D p(1.0f * x/screenWidth * 2 - 1.0f,
+                1.0f * y/screenHeight * 2 - 1.0f,
+                0);
+    p.setY(-p.y());
+
+    float op_sqr = p.x() * p.x() + p.y() * p.y();
+    float arcball_radius_sqr = 1.0f * 1.0f;
+    if(op_sqr <= arcball_radius_sqr)
+        p.setZ(sqrtf(arcball_radius_sqr - op_sqr));
+    else
+        p.normalize();  // TODO: check
+    return p;
 }

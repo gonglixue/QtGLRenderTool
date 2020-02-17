@@ -1,7 +1,7 @@
 ﻿#include "mycamera.h"
 #include <QtMath>
 MyCamera::MyCamera(QVector3D position, QVector3D up, GLfloat yaw, GLfloat pitch):
-    Front(QVector3D(0.0f, 0.0f, -1.0f)),
+    Front(-1.0f * position),
     MovementSpeed(SPEED),
     MouseSensitivity(SENSITIVITY),
     Zoom(ZOOM)

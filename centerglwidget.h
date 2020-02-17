@@ -59,27 +59,33 @@ protected:
 
     void mousePressEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
+    void mouseReleaseEvent(QMouseEvent* event);
     void wheelEvent(QWheelEvent* event);
     void keyPressEvent(QKeyEvent *event);
 
 private:
     QOpenGLShaderProgram* program;
     int screenWidth, screenHeight;
+    QPoint mouseLastPos;
+    QPoint mouseCurPos;
+    bool arcball;
 
     // Mesh
     MyMesh mesh;
 
     // transform
     QMatrix4x4 projection;
+    QMatrix4x4 model;
 
     // render config
-    int xRotAngle;
-    int yRotAngle;
-    int zRotAngle;
-    QPoint mouseLastPos;
     QVector3D objectColor;
     QVector3D lightColor;
     QVector3D lightPos;
+    GLfloat model_scale;
+
+    int xRotAngle;
+    int yRotAngle;
+    int zRotAngle;
 
     // gl var
     QOpenGLBuffer VBO;
@@ -87,6 +93,7 @@ private:
     QOpenGLVertexArrayObject VAO;
 
     void setupVertexAttribs();
+    QVector3D getArcballVector(int x, int y);
 
 public slots:
     void setXRotation(int angle);

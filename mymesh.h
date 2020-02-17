@@ -6,6 +6,7 @@
 #include <qopengl.h>
 #include <QVector3D>
 #include <QVector2D>
+#include <QMatrix4x4>
 #include <QString>
 #include <QFile>
 #include <QOpenGLFunctions>
@@ -26,14 +27,19 @@ class MyMesh
 {
 public:
     MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in):vertices(vertices_in),
-        indices(indices_in), max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){}
+        indices(indices_in), max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){
+        model.setToIdentity();
+    }
     MyMesh(QFile &file):max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9) {
 
         loadOBJ(file);
         QVector3D c(.0f, .0f, .0f);
+        model.setToIdentity();
         //normalize(1.0f, c);
     }
-    MyMesh():max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){}
+    MyMesh():max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){
+        model.setToIdentity();
+    }
 
 
     void loadOBJ(QFile& file);
@@ -44,7 +50,7 @@ public:
     std::vector<GLuint> indices;
 private:
 
-
+    QMatrix4x4 model;
     QVector3D max_vert, min_vert;
 
 };

@@ -104,7 +104,8 @@ void MyMesh::loadOBJ(QFile& file)
     cout << "load obj count" << vCount << ", " << vnCount;
     file.close();
 
-    // TODO: normalize
+    qDebug() << "max vert:" << max_vert;
+    qDebug() << "min vert:" << min_vert;
 
 }
 
@@ -121,6 +122,9 @@ void MyMesh::normalize(float length, QVector3D& center)
 
     max_vert = scale * (max_vert - center);
     min_vert = scale * (min_vert - center);
+
+    qDebug() << "max vert:" << max_vert;
+    qDebug() << "min vert:" << min_vert;
 }
 
 void MyMesh::set_center(QVector3D& center)
@@ -129,4 +133,10 @@ void MyMesh::set_center(QVector3D& center)
     {
         vertices[i].Position = (this->vertices[i].Position - center);
     }
+
+    max_vert = max_vert - center;
+    min_vert = min_vert - center;
+
+    qDebug() << "max vert:" << max_vert;
+    qDebug() << "min vert:" << min_vert;
 }

@@ -27,7 +27,7 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     model.rotate(zRotAngle, QVector3D(0, 0, 1));
     model.scale(model_scale);
 
-    program = new QOpenGLShaderProgram;
+    shader_program = new MyShader;
 }
 
 CenterGLWidget::~CenterGLWidget()
@@ -38,8 +38,7 @@ CenterGLWidget::~CenterGLWidget()
 void CenterGLWidget::cleanup()
 {
     makeCurrent();
-    delete this->program;
-    this->program = 0;
+    delete shader_program;
     doneCurrent();
 }
 
@@ -84,18 +83,9 @@ void CenterGLWidget::initializeGL()
     }
 
 
-    if(!program->addShaderFromSourceFile(QOpenGLShader::Vertex, vShaderFile))
-    {
-        std::cerr <<"unable to compile vertx shader: " ;
-        std::cerr << vShaderFile.toStdString() << std::endl;
-    }
+    shader_program->init_shader(vShaderFile, fShaderFile);
 
-    if (!program->addShaderFromSourceFile(QOpenGLShader::Fragment, fShaderFile))
-        std::cerr <<"unable to compile fragmet shader: " << fShaderFile.toStdString() << endl;
-
-    if (!program->link())
-        std::cerr <<"unable to link shader program\n";
-    program->bind();
+    shader_program->bind();
 
 }
 
@@ -121,57 +111,6 @@ void CenterGLWidget::setupVertexAttribs()
 
     // TODO: TEXCOORDS
 }
-
-/*
-void CenterGLWidget::paintGL()
-{
-    qDebug() << "paintGL";
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    QOpenGLVertexArrayObject::Binder vaoBinder(&this->VAO);
-    QMatrix4x4 model;
-    model.setToIdentity();
-    //model.rotate(xRotAngle, QVector3D(1, 0, 0));
-    //model.rotate(yRotAngle, QVector3D(0, 1, 0));
-    //model.rotate(zRotAngle, QVector3D(0, 0, 1));
-    //model.scale(10.0f);
-
-    this->program->bind();
-    //qDebug() << "program bind ok";
-    //this->VAO.bind();
-    GLuint objectColorLoc = program->uniformLocation("u_objectColor");
-    GLuint coolColorLoc = program->uniformLocation("u_coolColor");
-    GLuint warmColorLoc = program->uniformLocation("u_warmColor");
-    GLuint lightColorLoc = program->uniformLocation("u_lightColor");
-    GLuint lightPosLoc = program->uniformLocation("u_lightPos");
-    GLuint viewPosLoc = program->uniformLocation("u_viewPos");
-    GLuint alphaLoc = program->uniformLocation("u_alpha");
-    GLuint betaLoc = program->uniformLocation("u_beta");
-    GLuint modelLoc = program->uniformLocation("u_model_mat");
-    GLuint viewLoc = program->uniformLocation("u_view_mat");
-    GLuint projLoc = program->uniformLocation("u_projection_mat");
-
-    program->setUniformValue(objectColorLoc, this->objectColor);
-    program->setUniformValue(coolColorLoc, QVector3D(0, 0, 1));
-    program->setUniformValue(warmColorLoc, QVector3D(1, 0, 0));
-    program->setUniformValue(alphaLoc, 0.5f);
-    program->setUniformValue(betaLoc, 0.5f);
-    program->setUniformValue(lightColorLoc, this->lightColor);
-    program->setUniformValue(lightPosLoc, this->lightPos);
-    program->setUniformValue(viewPosLoc, this->camera.Position );
-
-
-    program->setUniformValue(modelLoc, model);
-    program->setUniformValue(viewLoc, this->camera.GetViewMatrix());
-    program->setUniformValue(projLoc, this->projection);
-    //qDebug() << "set uniform ok";
-    //glDrawArrays(GL_TRIANGLES, 0, this->mesh.vertices.size());
-    glDrawElements(GL_TRIANGLES, this->mesh.indices.size(), GL_UNSIGNED_INT, 0);
-    //qDebug() << "draw ok";
-    program->release();
-}
-*/
-
 
 void CenterGLWidget::paintGL()
 {
@@ -218,28 +157,19 @@ void CenterGLWidget::paintGL()
         mouseLastPos = mouseCurPos;
     }
     
-    this->program->bind();
-    GLuint loc_model = program->uniformLocation("model");
-    GLuint loc_view = program->uniformLocation("view");
-    GLuint loc_projection = program->uniformLocation("projection");
+    shader_program->bind();
 
-    GLuint loc_lightPos = program->uniformLocation("lightPos");
-    GLuint loc_viewPos = program->uniformLocation("viewPos");
-    GLuint loc_lightColor = program->uniformLocation("lightColor");
-    GLuint loc_objColor = program->uniformLocation("objectColor");
-
-    program->setUniformValue(loc_model, model);
-    program->setUniformValue(loc_view, view_mat);
-    program->setUniformValue(loc_projection, this->projection);
-
-    program->setUniformValue(loc_lightPos, this->lightPos);
-    program->setUniformValue(loc_viewPos, this->camera.Position);
-    program->setUniformValue(loc_lightColor, this->lightColor);
-    program->setUniformValue(loc_objColor, this->objectColor);
+    shader_program->setUniformValue<QMatrix4x4>("model", model);
+    shader_program->setUniformValue("view", view_mat);
+    shader_program->setUniformValue("projection", projection);
+    shader_program->setUniformValue("lightPos", lightPos);
+    shader_program->setUniformValue("viewPos", camera.Position);
+    shader_program->setUniformValue("lightColor", lightColor);
+    shader_program->setUniformValue("objectColor", objectColor);
 
     glDrawElements(GL_TRIANGLES, this->mesh.indices.size(), GL_UNSIGNED_INT, 0);
 
-    program->release();
+    shader_program->unbind();
 
 }
 

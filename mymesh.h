@@ -29,9 +29,10 @@ public:
     MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in):vertices(vertices_in),
         indices(indices_in), max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){
         model.setToIdentity();
+        has_tex = false;
     }
     MyMesh(QFile &file):max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9) {
-
+        has_tex = false;
         loadOBJ(file);
         QVector3D c(.0f, .0f, .0f);
         model.setToIdentity();
@@ -39,6 +40,7 @@ public:
     }
     MyMesh():max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){
         model.setToIdentity();
+        has_tex = false;
     }
 
 
@@ -52,6 +54,7 @@ private:
 
     QMatrix4x4 model;
     QVector3D max_vert, min_vert;
+    bool has_tex;
 
 };
 

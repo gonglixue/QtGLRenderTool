@@ -63,6 +63,8 @@ void MyMesh::loadOBJ(QFile& file)
         }
         else if(line.left(2) == "vt")
         {
+            has_tex = true;
+
             line.remove(0, 2);
             QStringList vertex_texcoords = line.split(' ',QString::SkipEmptyParts);
             GLfloat x = vertex_texcoords[0].toFloat();

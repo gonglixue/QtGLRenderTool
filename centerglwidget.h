@@ -25,6 +25,7 @@
 
 #include "mymesh.h"
 #include "mycamera.h"
+#include "myshader.h"
 
 class CenterGLWidget:public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -64,7 +65,7 @@ protected:
     void keyPressEvent(QKeyEvent *event);
 
 private:
-    QOpenGLShaderProgram* program;
+    MyShader* shader_program;
     int screenWidth, screenHeight;
     QPoint mouseLastPos;
     QPoint mouseCurPos;

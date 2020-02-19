@@ -28,13 +28,15 @@ SOURCES += \
         mainwindow.cpp \
     centerglwidget.cpp \
     mycamera.cpp \
-    mymesh.cpp
+    mymesh.cpp \
+    myshader.cpp
 
 HEADERS += \
         mainwindow.h \
     centerglwidget.h \
     mycamera.h \
-    mymesh.h
+    mymesh.h \
+    myshader.h
 
 FORMS += \
         mainwindow.ui

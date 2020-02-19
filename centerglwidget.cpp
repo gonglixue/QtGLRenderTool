@@ -27,8 +27,6 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     model.rotate(zRotAngle, QVector3D(0, 0, 1));
     model.scale(model_scale);
 
-    shader_program = new MyShader;
-    // shader_program = new MyShader(vShaderFile, fShaderFile);
 }
 
 CenterGLWidget::~CenterGLWidget()
@@ -83,10 +81,7 @@ void CenterGLWidget::initializeGL()
         this->loadMeshFromFile(file);
     }
 
-
-    shader_program->init_shader(vShaderFile, fShaderFile);
-
-    shader_program->bind();
+    shader_program = new MyShader(vShaderFile, fShaderFile);
 
 }
 

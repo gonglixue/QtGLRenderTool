@@ -28,6 +28,7 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     model.scale(model_scale);
 
     shader_program = new MyShader;
+    // shader_program = new MyShader(vShaderFile, fShaderFile);
 }
 
 CenterGLWidget::~CenterGLWidget()

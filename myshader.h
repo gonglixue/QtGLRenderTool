@@ -27,6 +27,7 @@ public:
     ~MyShader();
 
     void init_shader(QString vShaderFile, QString fShaderFile);
+    void init_shader(QString vShaderFile, QString gShaderFile, QString fShaderFile);
     bool AddShader(QString file_name, SHADER_TYPE type);
 
     bool bind(){

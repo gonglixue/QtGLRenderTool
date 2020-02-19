@@ -9,18 +9,13 @@ MyShader::MyShader()
 MyShader::MyShader(QString vShaderFile, QString fShaderFile)
 {
     this->program = new QOpenGLShaderProgram;
-    AddShader(vShaderFile, VERTEX_SHADER);
-    AddShader(fShaderFile, FRAGMENT_SHADER);
-    link();
+    init_shader(vShaderFile, fShaderFile);
 }
 
 MyShader::MyShader(QString vShaderFile, QString gShaderFile, QString fShaderFile)
 {
     this->program = new QOpenGLShaderProgram;
-    AddShader(vShaderFile, VERTEX_SHADER);
-    AddShader(gShaderFile, GEOMETRY_SHADER);
-    AddShader(fShaderFile, FRAGMENT_SHADER);
-    link();
+    init_shader(vShaderFile, gShaderFile, fShaderFile);
 }
 
 MyShader::~MyShader()
@@ -30,17 +25,23 @@ MyShader::~MyShader()
 
 void MyShader::init_shader(QString vShaderFile, QString fShaderFile)
 {
-    if(!program->addShaderFromSourceFile(QOpenGLShader::Vertex, vShaderFile))
-    {
-        std::cerr <<"unable to compile Vertx shader: " << vShaderFile.toStdString() << std::endl;
-        return;
-    }
-    // AddShader(vShaderFile, VERTEX_SHADER);
+    AddShader(vShaderFile, VERTEX_SHADER);
     AddShader(fShaderFile, FRAGMENT_SHADER);
     qDebug() << "add shader success";
     link();
     qDebug() << "link shader success";
 }
+
+void MyShader::init_shader(QString vShaderFile, QString gShaderFile, QString fShaderFile)
+{
+    AddShader(vShaderFile, VERTEX_SHADER);
+    AddShader(gShaderFile, GEOMETRY_SHADER);
+    AddShader(fShaderFile, FRAGMENT_SHADER);
+    qDebug() << "add shader success";
+    link();
+    qDebug() << "link shader success";
+}
+
 
 bool MyShader::AddShader(QString file_name, SHADER_TYPE type)
 {

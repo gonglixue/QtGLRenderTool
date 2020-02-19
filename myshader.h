@@ -39,7 +39,7 @@ public:
     }
 
     template <typename T>
-    void setUniformValue(char* name, T& value) const
+    void setUniformValue(const char* name, const T& value) const
     {
         GLuint loc = program->uniformLocation(name);
         program->setUniformValue(loc, value);

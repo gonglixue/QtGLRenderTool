@@ -7,7 +7,9 @@ using namespace std;
 void MyMesh::loadOBJ(QFile& file)
 {
     qDebug() << "enter MyMesh::LoadOBJ";
-    cout << "enter MyMesh::loadOBJ" << endl;
+    this->indices.clear();
+    this->vertices.clear();
+
     QTextStream in(&file);
 
     int vCount=0, vnCount=0, vtCount=0;

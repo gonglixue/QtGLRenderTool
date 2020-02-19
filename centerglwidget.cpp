@@ -115,19 +115,11 @@ void CenterGLWidget::paintGL()
     if(this->mesh.vertices.empty())
     {
 
-        // this->program->bind();
-        // program->release();
         return;
     }
     qDebug() << "draw";
     QOpenGLVertexArrayObject::Binder vaoBinder(&this->VAO);
     
-//    QMatrix4x4 model;
-//    model.setToIdentity();
-//    model.rotate(xRotAngle, QVector3D(1, 0, 0));
-//    model.rotate(yRotAngle, QVector3D(0, 1, 0));
-//    model.rotate(zRotAngle, QVector3D(0, 0, 1));
-//    model.scale(model_scale);
 
     // arcball
     QMatrix4x4 view_mat = this->camera.GetViewMatrix();

@@ -1,7 +1,7 @@
 ﻿#include "centerglwidget.h"
 
 CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QVector3D(0, 0.5f, 5.0f)),
-    VBO(QOpenGLBuffer::VertexBuffer), EBO(QOpenGLBuffer::IndexBuffer)
+    VBO(QOpenGLBuffer::VertexBuffer)
 {
     screenHeight = 500;
     screenHeight = 500;
@@ -38,6 +38,8 @@ void CenterGLWidget::cleanup()
 {
     makeCurrent();
     delete shader_program;
+    this->VAO.destroy();
+    this->VBO.destroy();
     doneCurrent();
 }
 
@@ -88,14 +90,15 @@ void CenterGLWidget::initializeGL()
 void CenterGLWidget::setupVertexAttribs()
 {
     this->VAO.create();
-    QOpenGLVertexArrayObject::Binder VAOBinder(&this->VAO);
+    // QOpenGLVertexArrayObject::Binder VAOBinder(&this->VAO);
+    VAO.bind();
     this->VBO.create();
-    this->EBO.create();
+    // this->EBO.create();
 
     VBO.bind();
     VBO.allocate(&this->mesh.vertices[0], this->mesh.vertices.size()*sizeof(Vertex));
-    EBO.bind();
-    EBO.allocate(&this->mesh.indices[0], this->mesh.indices.size()*sizeof(GLuint));
+    // EBO.bind();
+    // EBO.allocate(&this->mesh.indices[0], this->mesh.indices.size()*sizeof(GLuint));
 
     QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
     // POSITION
@@ -104,8 +107,11 @@ void CenterGLWidget::setupVertexAttribs()
     // NORMALS
     f->glEnableVertexAttribArray(1);
     f->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, Normal)));
+    // TEXCOORDS
+    f->glEnableVertexAttribArray(2);
+    f->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, TexCoords)));
 
-    // TODO: TEXCOORDS
+    VAO.release();
 }
 
 void CenterGLWidget::paintGL()
@@ -147,6 +153,7 @@ void CenterGLWidget::paintGL()
     
     shader_program->bind();
 
+
     shader_program->setUniformValue<QMatrix4x4>("model", model);
     shader_program->setUniformValue("view", view_mat);
     shader_program->setUniformValue("projection", projection);
@@ -155,7 +162,9 @@ void CenterGLWidget::paintGL()
     shader_program->setUniformValue("lightColor", lightColor);
     shader_program->setUniformValue("objectColor", objectColor);
 
-    glDrawElements(GL_TRIANGLES, this->mesh.indices.size(), GL_UNSIGNED_INT, 0);
+    VAO.bind();
+    // glDrawElements(GL_TRIANGLES, this->mesh.indices.size(), GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_TRIANGLES, 0, this->mesh.vertices.size());
 
     shader_program->unbind();
 

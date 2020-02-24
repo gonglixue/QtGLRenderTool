@@ -90,7 +90,7 @@ private:
 
     // gl var
     QOpenGLBuffer VBO;
-    QOpenGLBuffer EBO;
+    // QOpenGLBuffer EBO;
     QOpenGLVertexArrayObject VAO;
 
     void setupVertexAttribs();

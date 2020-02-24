@@ -3,17 +3,29 @@
 
 using namespace std;
 
+MyMesh::MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in)
+{
+    this->triangles_num_ = indices_in.size() / 3;
+    for(int i=0; i<indices_in.size(); i++)
+    {
+        int vert_ind = indices_in[i];  // ATTENTION: vert_ind starts from zero
+        this->vertices.push_back(vertices_in[vert_ind]);
+    }
+}
 
 void MyMesh::loadOBJ(QFile& file)
 {
     qDebug() << "enter MyMesh::LoadOBJ";
-    this->indices.clear();
     this->vertices.clear();
 
     QTextStream in(&file);
 
     int vCount=0, vnCount=0, vtCount=0;
     QString line = in.readLine();
+
+    vector<QVector3D> temp_vertices;
+    vector<QVector3D> temp_normals;
+    vector<QVector2D> temp_texcoords;
 
     while(true)
     {
@@ -32,9 +44,10 @@ void MyMesh::loadOBJ(QFile& file)
             GLfloat y = vertex_coords[1].toFloat();
             GLfloat z = vertex_coords[2].toFloat();
 
-            Vertex vert;
-            vert.Position = QVector3D(x, y, z);
-            vertices.push_back(vert);
+//            Vertex vert;
+//            vert.Position = QVector3D(x, y, z);
+//            vertices.push_back(vert);
+            temp_vertices.push_back(QVector3D(x, y, z));
             vCount++;
 
             {
@@ -60,7 +73,8 @@ void MyMesh::loadOBJ(QFile& file)
             GLfloat y = vertex_normal[1].toFloat();
             GLfloat z = vertex_normal[2].toFloat();
 
-            vertices[vnCount].Normal = QVector3D(x, y, z);
+            // vertices[vnCount].Normal = QVector3D(x, y, z);
+            temp_normals.push_back(QVector3D(x, y, z));
             vnCount++;
         }
         else if(line.left(2) == "vt")
@@ -72,7 +86,8 @@ void MyMesh::loadOBJ(QFile& file)
             GLfloat x = vertex_texcoords[0].toFloat();
             GLfloat y = vertex_texcoords[1].toFloat();
 
-            vertices[vtCount].TexCoords = QVector2D(x, y);
+            // vertices[vtCount].TexCoords = QVector2D(x, y);
+            temp_texcoords.push_back(QVector2D(x, y));
             vtCount++;
         }
         else if(line.left(2) == "f ")
@@ -86,17 +101,23 @@ void MyMesh::loadOBJ(QFile& file)
                 // TODO: texture coordinates
                 QString aVert = face_index[i];
                 QStringList  aVert_index = aVert.split('/');
-                GLuint v_index = aVert_index[0].toInt() - 1;
-                //int t_index = aVert_index[1].toInt();
-                GLuint n_index = aVert_index[2].toInt() - 1;
 
-                if(v_index != n_index){
-                    cout << "v_index != n_index";
+                Vertex vert;
+                int v_index = aVert_index[0].toInt() - 1;
+                vert.Position = temp_vertices[v_index];
+
+
+                if(aVert_index[1].length() > 0 && temp_texcoords.size() > 0){
+                    int t_index = aVert_index[1].toInt() - 1;
+                    vert.TexCoords = temp_texcoords[t_index];
                 }
-                else{
-                    //qDebug() << n_index << "/";
-                    indices.push_back(n_index);
+
+                if(aVert_index[2].length() > 0 && temp_normals.size() > 0)
+                {
+                    int n_index = aVert_index[2].toInt() - 1;
+                    vert.Normal = temp_normals[n_index];
                 }
+                this->vertices.push_back(vert);
             }
         }
 
@@ -110,6 +131,7 @@ void MyMesh::loadOBJ(QFile& file)
 
     qDebug() << "max vert:" << max_vert;
     qDebug() << "min vert:" << min_vert;
+    this->triangles_num_ = this->vertices.size() / 3;
 
 }
 

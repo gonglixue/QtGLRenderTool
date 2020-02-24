@@ -26,20 +26,14 @@ struct Texture{
 class MyMesh
 {
 public:
-    MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in):vertices(vertices_in),
-        indices(indices_in), max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){
-        model.setToIdentity();
-        has_tex = false;
-    }
+    MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in);
     MyMesh(QFile &file):max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9) {
         has_tex = false;
         loadOBJ(file);
         QVector3D c(.0f, .0f, .0f);
-        model.setToIdentity();
         //normalize(1.0f, c);
     }
     MyMesh():max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){
-        model.setToIdentity();
         has_tex = false;
     }
 
@@ -47,14 +41,16 @@ public:
     void loadOBJ(QFile& file);
     void normalize(float length, QVector3D& center);
     void set_center(QVector3D& center);
+    int TriangleNum() { return triangles_num_; }
 
     std::vector<Vertex> vertices;
-    std::vector<GLuint> indices;
+    // std::vector<GLuint> indices;
 private:
 
-    QMatrix4x4 model;
+    // QMatrix4x4 model;
     QVector3D max_vert, min_vert;
     bool has_tex;
+    int triangles_num_;
 
 };
 

@@ -3,14 +3,59 @@
 
 using namespace std;
 
-MyMesh::MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in)
+MyMesh::MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in):max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9)
 {
     this->triangles_num_ = indices_in.size() / 3;
     for(int i=0; i<indices_in.size(); i++)
     {
         int vert_ind = indices_in[i];  // ATTENTION: vert_ind starts from zero
-        this->vertices.push_back(vertices_in[vert_ind]);
+        Vertex v = vertices_in[vert_ind];
+        this->vertices.push_back(v);
+        float x = v.Position.x();
+        float y = v.Position.y();
+        float z = v.Position.z();
+        if (x < min_vert.x())
+            min_vert.setX(x);
+        if (x > max_vert.x())
+            max_vert.setX(x);
+        if (y < min_vert.y())
+            min_vert.setY(y);
+        if (y > max_vert.y())
+            max_vert.setY(y);
+        if (z < min_vert.z())
+            min_vert.setZ(z);
+        if (z > max_vert.z())
+            max_vert.setZ(z);
     }
+
+    has_tex = false;
+}
+
+MyMesh::MyMesh(std::vector<Vertex> &vertices_in):max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9)
+{
+    this->triangles_num_ = vertices_in.size() / 3;
+    this->vertices = vertices_in;
+    for(int i=0; i<vertices_in.size(); i++)
+    {
+        Vertex v = vertices_in[i];
+        float x = v.Position.x();
+        float y = v.Position.y();
+        float z = v.Position.z();
+        if (x < min_vert.x())
+            min_vert.setX(x);
+        if (x > max_vert.x())
+            max_vert.setX(x);
+        if (y < min_vert.y())
+            min_vert.setY(y);
+        if (y > max_vert.y())
+            max_vert.setY(y);
+        if (z < min_vert.z())
+            min_vert.setZ(z);
+        if (z > max_vert.z())
+            max_vert.setZ(z);
+    }
+
+    has_tex = false;
 }
 
 void MyMesh::loadOBJ(QFile& file)
@@ -165,4 +210,16 @@ void MyMesh::set_center(QVector3D& center)
 
     qDebug() << "max vert:" << max_vert;
     qDebug() << "min vert:" << min_vert;
+}
+
+void MyMesh::UpdatePlaneY(MyMesh &m, float y)
+{
+    for(int i=0;i<m.vertices.size();i++)
+    {
+        m.vertices[i].Position.setY(y);
+        if (y < m.min_vert.y())
+            m.min_vert.setY(y);
+        if (y > m.max_vert.y())
+            m.max_vert.setY(y);
+    }
 }

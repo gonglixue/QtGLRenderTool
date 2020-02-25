@@ -1,7 +1,7 @@
 ﻿#include "centerglwidget.h"
 
 CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QVector3D(0, 0.5f, 5.0f)),
-    VBO(QOpenGLBuffer::VertexBuffer)
+    VBO(QOpenGLBuffer::VertexBuffer), planeVBO(QOpenGLBuffer::VertexBuffer)
 {
     screenHeight = 500;
     screenHeight = 500;
@@ -27,6 +27,31 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     model.rotate(zRotAngle, QVector3D(0, 0, 1));
     model.scale(model_scale);
 
+    // init plane
+    std::vector<Vertex> plane_vertices(6);
+    plane_vertices[0].Position = QVector3D(-1.0f, 0, 1.0f);
+    plane_vertices[1].Position = QVector3D(-1.0f, 0, -1.0f);
+    plane_vertices[2].Position = QVector3D(1.0, 0, -1.0f);
+    plane_vertices[3].Position = QVector3D(-1.0f, 0.0f, 1.0f);
+    plane_vertices[4].Position = QVector3D(1.0f, 0, -1.0f);
+    plane_vertices[5].Position = QVector3D(1.0f, 0, 1.0f);
+
+    plane_vertices[0].Normal = QVector3D(0, 1.0f, 0);
+    plane_vertices[1].Normal = QVector3D(0, 1.0f, 0);
+    plane_vertices[2].Normal = QVector3D(0, 1.0f, 0);
+    plane_vertices[3].Normal = QVector3D(0, 1.0f, 0);
+    plane_vertices[4].Normal = QVector3D(0, 1.0f, 0);
+    plane_vertices[5].Normal = QVector3D(0, 1.0f, 0);
+
+    plane_vertices[0].TexCoords = QVector2D(0.0f, 1.0f);
+    plane_vertices[1].TexCoords = QVector2D(0.0f, 0.0f);
+    plane_vertices[2].TexCoords = QVector2D(1.0f, 0.0f);
+    plane_vertices[3].TexCoords = QVector2D(0.0f, 1.0f);
+    plane_vertices[4].TexCoords = QVector2D(1.0f, 0.0f);
+    plane_vertices[5].TexCoords = QVector2D(1.0f, 1.0f);
+
+    plane = MyMesh(plane_vertices);
+
 }
 
 CenterGLWidget::~CenterGLWidget()
@@ -40,6 +65,8 @@ void CenterGLWidget::cleanup()
     delete shader_program;
     this->VAO.destroy();
     this->VBO.destroy();
+    this->planeVAO.destroy();
+    this->planeVBO.destroy();
     doneCurrent();
 }
 
@@ -49,6 +76,10 @@ void CenterGLWidget::loadMeshFromFile(QFile &file)
     this->mesh.loadOBJ(file);
     QVector3D c(0.0f, 0.0f, 0.3f);
     this->mesh.normalize(1.0, c);
+
+    // update plane y
+    MyMesh::UpdatePlaneY(plane, this->mesh.MinVert().y());
+
     setupVertexAttribs();
     update();
 }
@@ -64,7 +95,7 @@ void CenterGLWidget::initializeGL()
     glDisable(GL_CULL_FACE);
     glClearColor(0, 0, 0.4f, 1);
 
-
+    // load obj once program starts
     QString fn = QFileDialog::getOpenFileName(
                 this,
                 tr("Open an OBJ Model File"),
@@ -83,25 +114,43 @@ void CenterGLWidget::initializeGL()
         this->loadMeshFromFile(file);
     }
 
+    // setupVertexAttribs();
     shader_program = new MyShader(vShaderFile, fShaderFile);
 
 }
 
 void CenterGLWidget::setupVertexAttribs()
 {
-    this->VAO.create();
-    // QOpenGLVertexArrayObject::Binder VAOBinder(&this->VAO);
-    VAO.bind();
-    this->VBO.create();
-    // this->EBO.create();
-
-    VBO.bind();
-    VBO.allocate(&this->mesh.vertices[0], this->mesh.vertices.size()*sizeof(Vertex));
-    // EBO.bind();
-    // EBO.allocate(&this->mesh.indices[0], this->mesh.indices.size()*sizeof(GLuint));
-
     QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
-    // POSITION
+    if(!VAO.isCreated())
+        VAO.create();
+    if(!VBO.isCreated())
+        VBO.create();
+    if(!this->mesh.vertices.empty()){
+        VAO.bind();
+        VBO.bind();
+        VBO.allocate(&this->mesh.vertices[0], this->mesh.vertices.size()*sizeof(Vertex));
+
+        // POSITION
+        f->glEnableVertexAttribArray(0);
+        f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(0));
+        // NORMALS
+        f->glEnableVertexAttribArray(1);
+        f->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, Normal)));
+        // TEXCOORDS
+        f->glEnableVertexAttribArray(2);
+        f->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, TexCoords)));
+
+        VAO.release();
+    }
+
+    if(!this->planeVAO.isCreated())
+        this->planeVAO.create();
+    if(!this->planeVBO.isCreated())
+        this->planeVBO.create();
+    planeVAO.bind();
+    planeVBO.bind();
+    planeVBO.allocate(&this->plane.vertices[0], this->plane.vertices.size() * sizeof(Vertex));
     f->glEnableVertexAttribArray(0);
     f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(0));
     // NORMALS
@@ -110,25 +159,17 @@ void CenterGLWidget::setupVertexAttribs()
     // TEXCOORDS
     f->glEnableVertexAttribArray(2);
     f->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, TexCoords)));
+    planeVAO.release();
 
-    VAO.release();
 }
 
 void CenterGLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if(this->mesh.vertices.empty())
-    {
-
-        return;
-    }
-    qDebug() << "draw";
-    QOpenGLVertexArrayObject::Binder vaoBinder(&this->VAO);
-    
+    QMatrix4x4 view_mat = this->camera.GetViewMatrix();
 
     // arcball
-    QMatrix4x4 view_mat = this->camera.GetViewMatrix();
     if(mouseLastPos != mouseCurPos) // TODO: check `!=` overload
     {
         qDebug() << "paintGL::arcball active";
@@ -150,10 +191,8 @@ void CenterGLWidget::paintGL()
 
         mouseLastPos = mouseCurPos;
     }
-    
+
     shader_program->bind();
-
-
     shader_program->setUniformValue<QMatrix4x4>("model", model);
     shader_program->setUniformValue("view", view_mat);
     shader_program->setUniformValue("projection", projection);
@@ -162,10 +201,15 @@ void CenterGLWidget::paintGL()
     shader_program->setUniformValue("lightColor", lightColor);
     shader_program->setUniformValue("objectColor", objectColor);
 
-    VAO.bind();
-    // glDrawElements(GL_TRIANGLES, this->mesh.indices.size(), GL_UNSIGNED_INT, 0);
-    glDrawArrays(GL_TRIANGLES, 0, this->mesh.vertices.size());
+    planeVAO.bind();
+    glDrawArrays(GL_TRIANGLES, 0, this->plane.vertices.size());
 
+    if(!this->mesh.vertices.empty())
+    {
+        VAO.bind();
+        // glDrawElements(GL_TRIANGLES, this->mesh.indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, this->mesh.vertices.size());
+    }
     shader_program->unbind();
 
 }

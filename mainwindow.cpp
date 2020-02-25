@@ -6,7 +6,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    // connect(ui->actionLoad_Brep_File, SIGNAL(triggered(bool)), this, SLOT(LoadBrepFile()));
     connect(ui->actionLoadOBJ, SIGNAL(triggered(bool)), this, SLOT(LoadOBJ()));
 
 }

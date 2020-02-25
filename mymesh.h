@@ -27,6 +27,7 @@ class MyMesh
 {
 public:
     MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in);
+    MyMesh(std::vector<Vertex> &vertices_in);
     MyMesh(QFile &file):max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9) {
         has_tex = false;
         loadOBJ(file);
@@ -37,14 +38,18 @@ public:
         has_tex = false;
     }
 
+    static void UpdatePlaneY(MyMesh& m, float y);
+
 
     void loadOBJ(QFile& file);
     void normalize(float length, QVector3D& center);
     void set_center(QVector3D& center);
     int TriangleNum() { return triangles_num_; }
+    QVector3D MinVert() {return min_vert; }
 
     std::vector<Vertex> vertices;
     // std::vector<GLuint> indices;
+
 private:
 
     // QMatrix4x4 model;

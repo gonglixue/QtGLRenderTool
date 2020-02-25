@@ -73,6 +73,7 @@ private:
 
     // Mesh
     MyMesh mesh;
+    MyMesh plane;
 
     // transform
     QMatrix4x4 projection;
@@ -89,9 +90,8 @@ private:
     int zRotAngle;
 
     // gl var
-    QOpenGLBuffer VBO;
-    // QOpenGLBuffer EBO;
-    QOpenGLVertexArrayObject VAO;
+    QOpenGLBuffer VBO, planeVBO;
+    QOpenGLVertexArrayObject VAO, planeVAO;
 
     void setupVertexAttribs();
     QVector3D getArcballVector(int x, int y);

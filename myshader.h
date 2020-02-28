@@ -32,7 +32,7 @@ public:
 
     bool bind(){
         if(!program->bind())
-            std::cerr << "unable to bind program";
+            qDebug() << "unable to bind program";
     }
     void unbind(){
         program->release();
@@ -43,6 +43,7 @@ public:
     {
         GLuint loc = program->uniformLocation(name);
         program->setUniformValue(loc, value);
+
     }
 
 
@@ -50,7 +51,7 @@ private:
     QOpenGLShaderProgram* program;
     bool link(){
         if(!program->link())
-            std::cerr << "unable to link shader program\n";
+            qDebug() << "unable to link shader program\n";
     }
 };
 

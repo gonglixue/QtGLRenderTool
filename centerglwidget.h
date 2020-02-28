@@ -1,14 +1,13 @@
 ﻿#ifndef CENTERGLWIDGET_H
 #define CENTERGLWIDGET_H
 
+#include <memory>
+
 #include <QOpenGLWidget>
-#include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QMatrix4x4>
 #include <QWidget>
-#include <QOpenGLWidget>
-#include <QOpenGLShaderProgram>
 #include <QKeyEvent>
 #include <QPoint>
 #include <QDir>
@@ -20,14 +19,18 @@
 #include <QStringList>
 #include <QVector3D>
 #include <QVector2D>
+#include <QOpenGLFramebufferObject>
+#include <QOpenGLFunctions_3_3_Core>
 
 #include <QDebug>
+
 
 #include "mymesh.h"
 #include "mycamera.h"
 #include "myshader.h"
+#include "texture2d.h"
 
-class CenterGLWidget:public QOpenGLWidget, protected QOpenGLFunctions
+class CenterGLWidget:public QOpenGLWidget
 {
     Q_OBJECT
 public:
@@ -93,8 +96,25 @@ private:
     QOpenGLBuffer VBO, planeVBO;
     QOpenGLVertexArrayObject VAO, planeVAO;
 
+    // shadow map config
+    int SHADOW_WIDTH, SHADOW_HEIGHT;
+    GLuint depthMap, depthMapFBO;
+    MyShader* simple_depth_shader_program;
+    QOpenGLFramebufferObject* qFBO;
+    void initFBO();
+    Texture2D test_texture;
+
     void setupVertexAttribs();
     QVector3D getArcballVector(int x, int y);
+    void renderScenne();
+    QOpenGLFunctions_3_3_Core *core;
+    void renderObjects(MyShader* shader);
+
+    // debug
+    QOpenGLBuffer quadVBO;
+    QOpenGLVertexArrayObject quadVAO;
+    void renderQuad();
+    MyShader* debug_shader_program;
 
 public slots:
     void setXRotation(int angle);

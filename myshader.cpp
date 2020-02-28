@@ -27,9 +27,7 @@ void MyShader::init_shader(QString vShaderFile, QString fShaderFile)
 {
     AddShader(vShaderFile, VERTEX_SHADER);
     AddShader(fShaderFile, FRAGMENT_SHADER);
-    qDebug() << "add shader success";
     link();
-    qDebug() << "link shader success";
 }
 
 void MyShader::init_shader(QString vShaderFile, QString gShaderFile, QString fShaderFile)
@@ -37,9 +35,7 @@ void MyShader::init_shader(QString vShaderFile, QString gShaderFile, QString fSh
     AddShader(vShaderFile, VERTEX_SHADER);
     AddShader(gShaderFile, GEOMETRY_SHADER);
     AddShader(fShaderFile, FRAGMENT_SHADER);
-    qDebug() << "add shader success";
     link();
-    qDebug() << "link shader success";
 }
 
 
@@ -50,21 +46,21 @@ bool MyShader::AddShader(QString file_name, SHADER_TYPE type)
     case VERTEX_SHADER:
         if(!program->addShaderFromSourceFile(QOpenGLShader::Vertex, file_name))
         {
-            std::cerr <<"unable to compile Vertx shader: " << file_name.toStdString() << std::endl;
+            qDebug() <<"unable to compile Vertx shader: " << file_name;
             return false;
         }
         break;
     case FRAGMENT_SHADER:
         if(!program->addShaderFromSourceFile(QOpenGLShader::Fragment, file_name))
         {
-            std::cerr <<"unable to compile Fragment shader: "  << file_name.toStdString() << std::endl;
+            qDebug() <<"unable to compile Fragment shader: "  << file_name;
             return false;
         }
         break;
     case GEOMETRY_SHADER:
         if(!program->addShaderFromSourceFile(QOpenGLShader::Geometry, file_name))
         {
-            std::cerr <<"unable to compile Geometry shader: "  << file_name.toStdString() << std::endl;
+            qDebug() <<"unable to compile Geometry shader: "  << file_name;
             return false;
         }
         break;

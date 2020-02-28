@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+# QT       += core gui opengl
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -29,16 +30,20 @@ SOURCES += \
     centerglwidget.cpp \
     mycamera.cpp \
     mymesh.cpp \
-    myshader.cpp
+    myshader.cpp \
+    texture2d.cpp \
+    littlethings.cpp
 
 HEADERS += \
         mainwindow.h \
     centerglwidget.h \
     mycamera.h \
     mymesh.h \
-    myshader.h
+    myshader.h \
+    texture2d.h \
+    littlethings.h
 
 FORMS += \
         mainwindow.ui
 
-LIBS += -lopengl32 -lglu32
+# LIBS += -lopengl32 -lglu32

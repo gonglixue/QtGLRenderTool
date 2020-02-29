@@ -29,6 +29,7 @@ MyMesh::MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in
     }
 
     has_tex = false;
+    core = NULL;
 }
 
 MyMesh::MyMesh(std::vector<Vertex> &vertices_in):max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9)
@@ -56,12 +57,20 @@ MyMesh::MyMesh(std::vector<Vertex> &vertices_in):max_vert(-1e9, -1e9, -1e9), min
     }
 
     has_tex = false;
+    core = NULL;
 }
 
 void MyMesh::loadOBJ(QFile& file)
 {
     qDebug() << "enter MyMesh::LoadOBJ";
     this->vertices.clear();
+    if(VAO!=0)
+        core->glDeleteVertexArrays(1, &VAO);
+    if(VBO!=0)
+        core->glDeleteBuffers(1, &VBO);
+    max_vert = QVector3D(-1e9, -1e9, -1e9);
+    min_vert = QVector3D(1e9, 1e9, 1e9);
+
 
     QTextStream in(&file);
 
@@ -180,6 +189,15 @@ void MyMesh::loadOBJ(QFile& file)
 
 }
 
+MyMesh::~MyMesh()
+{
+    this->vertices.clear();
+    if(VBO !=0 )
+        core->glDeleteBuffers(1, &VBO);
+    if(VAO !=0)
+        core->glDeleteVertexArrays(1, &VAO);
+}
+
 void MyMesh::normalize(float length, QVector3D& center)
 {
     float scale = fmax(max_vert.x() - min_vert.x(), max_vert.y() - min_vert.y());
@@ -222,4 +240,42 @@ void MyMesh::UpdatePlaneY(MyMesh &m, float y)
         if (y > m.max_vert.y())
             m.max_vert.setY(y);
     }
+}
+
+void MyMesh::setUpAttribute()
+{
+    core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
+
+    core->glGenBuffers(1, &VBO);
+    core->glGenVertexArrays(1, &VAO);
+    core->glBindVertexArray(VAO);
+
+    core->glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    core->glBufferData(GL_ARRAY_BUFFER, this->vertices.size()*sizeof(Vertex), &this->vertices[0], GL_STATIC_DRAW);
+
+    int attrib_location=-1;
+    // POSITION
+    core->glEnableVertexAttribArray(++attrib_location);
+    core->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(0));
+    // NORMALS
+    core->glEnableVertexAttribArray(++attrib_location);
+    core->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, Normal)));
+
+    // TEXCOORDS
+    core->glEnableVertexAttribArray(++attrib_location);
+    core->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, TexCoords)));
+
+    core->glBindVertexArray(0);
+
+}
+
+void MyMesh::draw()
+{
+    if(VAO != 0)
+    {
+        core->glBindVertexArray(VAO);
+        core->glDrawArrays(GL_TRIANGLES, 0, this->vertices.size());
+        core->glBindVertexArray(0);
+    }
+
 }

@@ -61,7 +61,6 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
 
     plane = MyMesh(plane_vertices);
 
-    qFBO = NULL;
     depthMap = 0;
     depthMapFBO = 0;
 
@@ -139,6 +138,8 @@ void CenterGLWidget::initializeGL()
 
 
     /* objects init */
+    mesh.setUpAttribute();
+
     cube = new Cube();
     cube->init();
     p_plane = new Plane();
@@ -152,10 +153,10 @@ void CenterGLWidget::initializeGL()
 
     // initFBO();
     QMatrix4x4 lightOrtho, lightView, lightSpaceMatrixOrtho;
-     float near_plane = 0.1f, far_plane = 11.0f;  // TODO: check
+     float near_plane = 1.0f, far_plane = 12.0f;  // TODO: check
     lightOrtho.ortho(-10.0, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 
-    lightView.lookAt(lightPos, QVector3D(0, 0, 0), QVector3D(0, 0, 1));
+    lightView.lookAt(QVector3D(-2.0f, 4.0f, -1.0f), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
     lightSpaceMatrixOrtho = lightOrtho * lightView;
 
     simple_depth_shader_program->bind();
@@ -268,18 +269,18 @@ void CenterGLWidget::paintGL()
 //    // qFBO->release();
 //    simple_depth_shader_program->unbind();
 
-    shadow->bindQFBO();
-    renderObjects(simple_depth_shader_program);
-    // simple_depth_shader_program->bind();
-    // renderScenne();
-    shadow->releaseQFBO();
+//    // shadow->bindQFBO();
+//    shadow->bindFBO();
+//    renderObjects(simple_depth_shader_program);
+//    // shadow->releaseQFBO();
+//    shadow->releaseFBO();
 
-    core->glViewport(0, 0, screenWidth, screenHeight);
-    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    debug_shader_program->bind();
-    core->glActiveTexture(GL_TEXTURE0);
-    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapQFBO());
-    quad->draw(GL_TRUE);
+//    core->glViewport(0, 0, screenWidth, screenHeight);
+//    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    debug_shader_program->bind();
+//    core->glActiveTexture(GL_TEXTURE0);
+//    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
+//    quad->draw(GL_TRUE);
 
 
     // 2. render
@@ -300,6 +301,19 @@ void CenterGLWidget::paintGL()
 //    renderScenne();
 //    simple_depth_shader_program->unbind();
 
+
+    core->glViewport(0, 0, screenWidth, screenHeight);
+    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    debug_shader_program->bind();
+    core->glActiveTexture(GL_TEXTURE0);
+    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
+    quad->draw(GL_TRUE);
+
+    shadow->bindFBO();
+    renderObjects(simple_depth_shader_program);
+    // shadow->releaseQFBO();
+    // mesh.draw();
+    shadow->releaseFBO();
 
 
 }
@@ -478,43 +492,29 @@ QVector3D CenterGLWidget::getArcballVector(int x, int y)
     return p;
 }
 
-void CenterGLWidget::initFBO()
-{
-    core->glGenTextures(1, &depthMap);
-    core->glGenFramebuffers(1, &depthMapFBO);
-    core->glBindTexture(GL_TEXTURE_2D, depthMap);
-
-    core->glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    core->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    core->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    core->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    core->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    core->glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-
-    core->glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    core->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    core->glDrawBuffer(GL_NONE);
-    core->glReadBuffer(GL_NONE);
-    core->glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-//    qFBO = new QOpenGLFramebufferObject(QSize(SHADOW_WIDTH, SHADOW_HEIGHT),
-//                                        QOpenGLFramebufferObject::Depth,
-//                                        GL_TEXTURE_2D);
-}
-
 void CenterGLWidget::renderObjects(MyShader* shader)
 {
     shader->bind();
     QMatrix4x4 mmodel;
     mmodel.translate(0.0f, -0.5f, 0.0f);
     mmodel.scale(50.0f, 1.0f, 50.0f);
-    shader->setUniformValue("model", model);
+    shader->setUniformValue("model", model*mmodel);
     p_plane->draw(GL_TRUE, GL_TRUE);
 
     mmodel.setToIdentity();
+    mmodel.translate(0.0f, 1.5f, 0.0f);
+    shader->setUniformValue("model", model*mmodel);
+    cube->draw(GL_TRUE, GL_TRUE);
+
+    mmodel.setToIdentity();
     mmodel.translate(2.0f, 0.0f, 1.0f);
-    shader->setUniformValue("model", model);
+    shader->setUniformValue("model",model* mmodel);
+    cube->draw(GL_TRUE, GL_TRUE);
+
+    mmodel.setToIdentity();
+    mmodel.translate(-1.0f, 0.0f, 2.0f);
+    mmodel.rotate(60.0f, QVector3D(1.0f, 0.0f, 1.0f));
+    mmodel.scale(0.5f);
+    shader->setUniformValue("model",model* mmodel);
     cube->draw(GL_TRUE, GL_TRUE);
 }

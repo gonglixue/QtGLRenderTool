@@ -269,7 +269,7 @@ void Shadow::initQFBO(){
 void Shadow::bindQFBO(){
   core->glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
   qFBO->bind();
-  core->glClear(GL_DEPTH_BUFFER_BIT);
+  core->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 void Shadow::releaseQFBO(){

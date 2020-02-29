@@ -9,8 +9,9 @@
 #include <QMatrix4x4>
 #include <QString>
 #include <QFile>
-#include <QOpenGLFunctions>
 #include <QDebug>
+
+#include <QOpenGLFunctions_3_3_Core>
 
 struct Vertex{
     QVector3D Position;
@@ -32,11 +33,13 @@ public:
         has_tex = false;
         loadOBJ(file);
         QVector3D c(.0f, .0f, .0f);
-        //normalize(1.0f, c);
+        core = NULL;
     }
     MyMesh():max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){
         has_tex = false;
+        core = NULL;
     }
+    ~MyMesh();
 
     static void UpdatePlaneY(MyMesh& m, float y);
 
@@ -50,12 +53,19 @@ public:
     std::vector<Vertex> vertices;
     // std::vector<GLuint> indices;
 
+    void draw();
+    void setUpAttribute();
+
 private:
 
     // QMatrix4x4 model;
     QVector3D max_vert, min_vert;
     bool has_tex;
     int triangles_num_;
+
+    QOpenGLFunctions_3_3_Core *core;
+    GLuint VAO=0, VBO=0;
+
 
 };
 

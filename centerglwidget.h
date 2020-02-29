@@ -100,8 +100,7 @@ private:
     int SHADOW_WIDTH, SHADOW_HEIGHT;
     GLuint depthMap, depthMapFBO;
     MyShader* simple_depth_shader_program;
-    QOpenGLFramebufferObject* qFBO;
-    void initFBO();
+
     Texture2D test_texture;
 
     void setupVertexAttribs();

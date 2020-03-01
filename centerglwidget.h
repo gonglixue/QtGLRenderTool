@@ -97,18 +97,14 @@ private:
     QVector3D lightPos;
     GLfloat model_scale;
 
-
     // shadow map config
     int SHADOW_WIDTH, SHADOW_HEIGHT;
     GLuint depthMap, depthMapFBO;
     MyShader* simple_depth_shader_program;
 
-    Texture2D test_texture;
-
     void setupVertexAttribs();
 
     void renderScenne();
-    void renderObjects(MyShader* shader);
 
     // debug
     GLuint quadVBO, quadVAO;

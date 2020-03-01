@@ -3,9 +3,6 @@
 #include "littlethings.h"
 
 Shadow *shadow;
-Plane  *p_plane;
-Quad *quad;
-Cube *cube;
 
 CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QVector3D(0, 0.5f, 5.0f))
 {
@@ -97,8 +94,6 @@ void CenterGLWidget::loadMeshFromFile(QFile &file)
 void CenterGLWidget::initializeGL()
 {
     qDebug() << "CenterGLWidget Initialize";
-//    makeCurrent();
-//    initializeOpenGLFunctions();
 
     core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
 
@@ -125,8 +120,6 @@ void CenterGLWidget::initializeGL()
         this->loadMeshFromFile(file);
     }
 
-    //setupVertexAttribs();
-
     shader_program = new MyShader(vShaderFile, fShaderFile);
     simple_depth_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.vs",
                                                "F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.frag");
@@ -136,18 +129,11 @@ void CenterGLWidget::initializeGL()
 
 
     /* objects init */
-    cube = new Cube();
-    cube->init();
-    p_plane = new Plane();
-    p_plane->init();
-    quad = new Quad();
-    quad->init();
     shadow = new Shadow();
     shadow->initFBO();
-    shadow->initQFBO();
+    // shadow->initQFBO();
 
 
-    // initFBO();
     QMatrix4x4 lightOrtho, lightView, lightSpaceMatrixOrtho;
      float near_plane = 1.0f, far_plane = 12.0f;  // TODO: check
     lightOrtho.ortho(-10.0, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
@@ -163,7 +149,6 @@ void CenterGLWidget::initializeGL()
     debug_shader_program->setUniformValue("near_plane", near_plane);
     debug_shader_program->setUniformValue("far_plane", far_plane);
 
-    test_texture.generate("F:/Documents/QtProject/ShadowMapping/res/textures/brickwall.jpg");
 }
 
 void CenterGLWidget::setupVertexAttribs()
@@ -196,43 +181,6 @@ void CenterGLWidget::paintGL()
 
         mouseLastPos = mouseCurPos;
     }
-
-
-
-//    core->glViewport(0, 0, screenWidth, screenHeight);
-//    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    debug_shader_program->bind();
-//    core->glActiveTexture(GL_TEXTURE0);
-//    core->glBindTexture(GL_TEXTURE_2D, depthMap);
-//    // test_texture.bind();
-//    qDebug() << "depthMap:" << depthMap << "\n";
-//    //core->glBindTexture(GL_TEXTURE_2D, qFBO->texture());
-//    renderQuad();
-
-//    simple_depth_shader_program->bind();
-//    simple_depth_shader_program->setUniformValue("model", model);
-//    core->glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-//    core->glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-//    // qFBO->bind();
-//    core->glClear(GL_DEPTH_BUFFER_BIT);
-//    renderScenne();
-//    core->glBindFramebuffer(GL_FRAMEBUFFER, 0);
-//    // qFBO->release();
-//    simple_depth_shader_program->unbind();
-
-//    // shadow->bindQFBO();
-//    shadow->bindFBO();
-//    renderObjects(simple_depth_shader_program);
-//    // shadow->releaseQFBO();
-//    shadow->releaseFBO();
-
-//    core->glViewport(0, 0, screenWidth, screenHeight);
-//    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    debug_shader_program->bind();
-//    core->glActiveTexture(GL_TEXTURE0);
-//    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
-//    quad->draw(GL_TRUE);
-
 
     // 2. render
 //    shader_program->bind();
@@ -431,29 +379,3 @@ QVector3D CenterGLWidget::getArcballVector(int x, int y)
     return p;
 }
 
-void CenterGLWidget::renderObjects(MyShader* shader)
-{
-    shader->bind();
-    QMatrix4x4 mmodel;
-    mmodel.translate(0.0f, -0.5f, 0.0f);
-    mmodel.scale(50.0f, 1.0f, 50.0f);
-    shader->setUniformValue("model", model*mmodel);
-    p_plane->draw(GL_TRUE, GL_TRUE);
-
-    mmodel.setToIdentity();
-    mmodel.translate(0.0f, 1.5f, 0.0f);
-    shader->setUniformValue("model", model*mmodel);
-    cube->draw(GL_TRUE, GL_TRUE);
-
-    mmodel.setToIdentity();
-    mmodel.translate(2.0f, 0.0f, 1.0f);
-    shader->setUniformValue("model",model* mmodel);
-    cube->draw(GL_TRUE, GL_TRUE);
-
-    mmodel.setToIdentity();
-    mmodel.translate(-1.0f, 0.0f, 2.0f);
-    mmodel.rotate(60.0f, QVector3D(1.0f, 0.0f, 1.0f));
-    mmodel.scale(0.5f);
-    shader->setUniformValue("model",model* mmodel);
-    cube->draw(GL_TRUE, GL_TRUE);
-}

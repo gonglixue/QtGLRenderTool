@@ -7,8 +7,7 @@ Plane  *p_plane;
 Quad *quad;
 Cube *cube;
 
-CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QVector3D(0, 0.5f, 5.0f)),
-    VBO(QOpenGLBuffer::VertexBuffer), planeVBO(QOpenGLBuffer::VertexBuffer), quadVBO(QOpenGLBuffer::VertexBuffer)
+CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QVector3D(0, 0.5f, 5.0f))
 {
     screenHeight = 500;
     screenHeight = 500;
@@ -35,8 +34,7 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     model.scale(model_scale);
 
     // init plane
-    std::vector<Vertex> plane_vertices;
-    plane_vertices.reserve(6);
+    std::vector<Vertex> plane_vertices(6);
 
     plane_vertices[0].Position = QVector3D(-1.0f, 0, 1.0f);
     plane_vertices[1].Position = QVector3D(-1.0f, 0, -1.0f);
@@ -63,7 +61,8 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
 
     depthMap = 0;
     depthMapFBO = 0;
-
+    quadVAO = 0;
+    quadVBO = 0;
 
 }
 
@@ -76,10 +75,8 @@ void CenterGLWidget::cleanup()
 {
     makeCurrent();
     delete shader_program;
-    this->VAO.destroy();
-    this->VBO.destroy();
-    //this->planeVAO.destroy();
-    //this->planeVBO.destroy();
+    delete simple_depth_shader_program;
+    delete debug_shader_program;
     doneCurrent();
 }
 
@@ -91,7 +88,7 @@ void CenterGLWidget::loadMeshFromFile(QFile &file)
     this->mesh.normalize(1.0, c);
 
     // update plane y
-    // MyMesh::UpdatePlaneY(plane, this->mesh.MinVert().y());
+    MyMesh::UpdatePlaneY(plane, this->mesh.MinVert().y());
 
     setupVertexAttribs();
     update();
@@ -106,7 +103,7 @@ void CenterGLWidget::initializeGL()
     core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
 
     core->glEnable(GL_DEPTH_TEST);
-    //core->glDisable(GL_CULL_FACE);
+    core->glDisable(GL_CULL_FACE);
     core->glClearColor(0, 0, 0.4f, 1);
 
     // load obj once program starts
@@ -128,7 +125,8 @@ void CenterGLWidget::initializeGL()
         this->loadMeshFromFile(file);
     }
 
-    // setupVertexAttribs();
+    //setupVertexAttribs();
+
     shader_program = new MyShader(vShaderFile, fShaderFile);
     simple_depth_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.vs",
                                                "F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.frag");
@@ -138,8 +136,6 @@ void CenterGLWidget::initializeGL()
 
 
     /* objects init */
-    mesh.setUpAttribute();
-
     cube = new Cube();
     cube->init();
     p_plane = new Plane();
@@ -156,7 +152,7 @@ void CenterGLWidget::initializeGL()
      float near_plane = 1.0f, far_plane = 12.0f;  // TODO: check
     lightOrtho.ortho(-10.0, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 
-    lightView.lookAt(QVector3D(-2.0f, 4.0f, -1.0f), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
+    lightView.lookAt(lightPos, QVector3D(0, 0, 0), QVector3D(0, 0, 1));
     lightSpaceMatrixOrtho = lightOrtho * lightView;
 
     simple_depth_shader_program->bind();
@@ -172,53 +168,8 @@ void CenterGLWidget::initializeGL()
 
 void CenterGLWidget::setupVertexAttribs()
 {
-
-    if(!VAO.isCreated())
-        VAO.create();
-    if(!VBO.isCreated())
-        VBO.create();
-    if(!this->mesh.vertices.empty()){
-        VAO.bind();
-        VBO.bind();
-        VBO.allocate(&this->mesh.vertices[0], this->mesh.vertices.size()*sizeof(Vertex));
-
-        // POSITION
-        core->glEnableVertexAttribArray(0);
-        core->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(0));
-        // NORMALS
-        core->glEnableVertexAttribArray(1);
-        core->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, Normal)));
-        // TEXCOORDS
-        core->glEnableVertexAttribArray(2);
-        core->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, TexCoords)));
-
-        VAO.release();
-    }
-
-//    if(!this->planeVAO.isCreated())
-//        this->planeVAO.create();
-//    if(!this->planeVBO.isCreated())
-//        this->planeVBO.create();
-
-//    if(!this->plane.vertices.empty())
-//    {
-//        planeVAO.bind();
-//        planeVBO.bind();
-//        planeVBO.allocate(&this->plane.vertices[0], this->plane.vertices.size() * sizeof(Vertex));
-//        f->glEnableVertexAttribArray(0);
-//        f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(0));
-//        // NORMALS
-//        f->glEnableVertexAttribArray(1);
-//        f->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, Normal)));
-//        // TEXCOORDS
-//        f->glEnableVertexAttribArray(2);
-//        f->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, TexCoords)));
-//        planeVAO.release();
-//    }
-
-
-
-
+    this->plane.setUpAttribute();
+    this->mesh.setUpAttribute();
 }
 
 void CenterGLWidget::paintGL()
@@ -230,7 +181,7 @@ void CenterGLWidget::paintGL()
     // arcball
     if(mouseLastPos != mouseCurPos)
     {
-        qDebug() << "paintGL::arcball active";
+        // qDebug() << "paintGL::arcball active";
         QVector3D va = getArcballVector(mouseLastPos.x(), mouseLastPos.y());
         QVector3D vb = getArcballVector(mouseCurPos.x(), mouseCurPos.y());
 
@@ -307,12 +258,13 @@ void CenterGLWidget::paintGL()
     debug_shader_program->bind();
     core->glActiveTexture(GL_TEXTURE0);
     core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
-    quad->draw(GL_TRUE);
+    // quad->draw(GL_TRUE);
+    renderQuad();
 
     shadow->bindFBO();
-    renderObjects(simple_depth_shader_program);
-    // shadow->releaseQFBO();
-    // mesh.draw();
+    simple_depth_shader_program->bind();
+    simple_depth_shader_program->setUniformValue("model", model);
+    renderScenne();
     shadow->releaseFBO();
 
 
@@ -320,28 +272,13 @@ void CenterGLWidget::paintGL()
 
 void CenterGLWidget::renderScenne()
 {
-
-
-    if(!this->mesh.vertices.empty())
-    {
-        VAO.bind();
-        // glDrawElements(GL_TRIANGLES, this->mesh.indices.size(), GL_UNSIGNED_INT, 0);
-        core->glDrawArrays(GL_TRIANGLES, 0, this->mesh.vertices.size());
-        VAO.release();
-    }
-
-//    if(true)
-//    {
-//        planeVAO.bind();
-//        glDrawArrays(GL_TRIANGLES, 0, 6);
-//        planeVAO.release();
-//    }
-
+    this->plane.draw();
+    this->mesh.draw();
 }
 
 void CenterGLWidget::renderQuad()
 {
-    if (!quadVAO.isCreated())
+    if (quadVAO==0)
     {
         float quadVertices[] = {
             // positions        // texture Coords
@@ -351,10 +288,12 @@ void CenterGLWidget::renderQuad()
              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
         };
         // setup plane VAO
-        quadVAO.create();
-        quadVBO.create();
-        quadVAO.bind();
-        quadVBO.allocate(quadVertices, sizeof(quadVertices));
+        core->glGenBuffers(1, &quadVBO);
+        core->glGenVertexArrays(1, &quadVAO);
+        core->glBindVertexArray(quadVAO);
+
+        core->glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        core->glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
 
 
         core->glEnableVertexAttribArray(0);
@@ -362,11 +301,11 @@ void CenterGLWidget::renderQuad()
         core->glEnableVertexAttribArray(1);
         core->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-        quadVAO.release();
+        core->glBindVertexArray(0);
     }
-    quadVAO.bind();
+    core->glBindVertexArray(quadVAO);
     core->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    quadVAO.release();
+    core->glBindVertexArray(0);
 }
 
 

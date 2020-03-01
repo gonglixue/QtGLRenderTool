@@ -68,11 +68,20 @@ protected:
     void keyPressEvent(QKeyEvent *event);
 
 private:
+    QOpenGLFunctions_3_3_Core *core;
+
     MyShader* shader_program;
+
+    // event
     int screenWidth, screenHeight;
     QPoint mouseLastPos;
     QPoint mouseCurPos;
     bool arcball;
+    int xRotAngle;
+    int yRotAngle;
+    int zRotAngle;
+    QVector3D getArcballVector(int x, int y);
+
 
     // Mesh
     MyMesh mesh;
@@ -88,13 +97,6 @@ private:
     QVector3D lightPos;
     GLfloat model_scale;
 
-    int xRotAngle;
-    int yRotAngle;
-    int zRotAngle;
-
-    // gl var
-    QOpenGLBuffer VBO, planeVBO;
-    QOpenGLVertexArrayObject VAO, planeVAO;
 
     // shadow map config
     int SHADOW_WIDTH, SHADOW_HEIGHT;
@@ -104,14 +106,12 @@ private:
     Texture2D test_texture;
 
     void setupVertexAttribs();
-    QVector3D getArcballVector(int x, int y);
+
     void renderScenne();
-    QOpenGLFunctions_3_3_Core *core;
     void renderObjects(MyShader* shader);
 
     // debug
-    QOpenGLBuffer quadVBO;
-    QOpenGLVertexArrayObject quadVAO;
+    GLuint quadVBO, quadVAO;
     void renderQuad();
     MyShader* debug_shader_program;
 

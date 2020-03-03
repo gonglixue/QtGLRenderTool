@@ -16,6 +16,7 @@ public:
     ~MainWindow();
 public slots:
     void LoadOBJ();
+    void ReFreshShader();
 private:
     Ui::MainWindow *ui;
 };

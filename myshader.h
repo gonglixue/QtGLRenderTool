@@ -46,9 +46,14 @@ public:
 
     }
 
+    void reLoad();
+
 
 private:
     QOpenGLShaderProgram* program;
+    bool hasGeometryShader;
+    QString m_vShaderFile, m_fShaderFile, m_gShaderFile;
+
     bool link(){
         if(!program->link())
             qDebug() << "unable to link shader program\n";

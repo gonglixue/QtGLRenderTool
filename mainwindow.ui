@@ -6,20 +6,71 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>527</width>
-    <height>573</height>
+    <width>734</width>
+    <height>591</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="CenterGLWidget" name="centralWidget"/>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="CenterGLWidget" name="mainGLWidget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>10</y>
+      <width>512</width>
+      <height>512</height>
+     </rect>
+    </property>
+    <zorder>refresh_shader_btn</zorder>
+    <zorder>refresh_shader_btn</zorder>
+   </widget>
+   <widget class="QTabWidget" name="tabWidget_control">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>10</y>
+      <width>181</width>
+      <height>511</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tab_shading">
+     <attribute name="title">
+      <string>显示</string>
+     </attribute>
+     <widget class="QPushButton" name="refresh_shader_btn">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>10</y>
+        <width>92</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Refresh Shader</string>
+      </property>
+     </widget>
+     <zorder>refresh_shader_btn</zorder>
+     <zorder>mainGLWidget</zorder>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Tab 2</string>
+     </attribute>
+    </widget>
+   </widget>
+  </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>527</width>
+     <width>734</width>
      <height>23</height>
     </rect>
    </property>

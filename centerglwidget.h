@@ -101,10 +101,11 @@ private:
     int SHADOW_WIDTH, SHADOW_HEIGHT;
     GLuint depthMap, depthMapFBO;
     MyShader* simple_depth_shader_program;
+    MyShader* shadow_mapping_program;
 
     void setupVertexAttribs();
-
     void renderScenne();
+    void setShadowLighting();
 
     // debug
     GLuint quadVBO, quadVAO;
@@ -118,6 +119,7 @@ public slots:
     void setLightX(GLfloat light_x);
     void setLightY(GLfloat light_y);
     void setLightZ(GLfloat light_z);
+    void reLinkShader();
 
 signals:
     void xRotationChanged(int angle);

@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->actionLoadOBJ, SIGNAL(triggered(bool)), this, SLOT(LoadOBJ()));
-
+    connect(ui->refresh_shader_btn, SIGNAL(released()), this, SLOT(ReFreshShader()));
 }
 
 MainWindow::~MainWindow()
@@ -33,6 +33,11 @@ void MainWindow::LoadOBJ()
             return;
         }
         qDebug() << "prepare to read obj mesh";
-        this->ui->centralWidget->loadMeshFromFile(file);
+        this->ui->mainGLWidget->loadMeshFromFile(file);
     }
+}
+
+void MainWindow::ReFreshShader()
+{
+    this->ui->mainGLWidget->reLinkShader();
 }

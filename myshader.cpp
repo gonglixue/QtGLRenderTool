@@ -4,18 +4,28 @@ MyShader::MyShader()
 {
     this->program = new QOpenGLShaderProgram;
     qDebug() << "default MyShader::Myshader()";
+    hasGeometryShader = false;
 }
 
 MyShader::MyShader(QString vShaderFile, QString fShaderFile)
 {
     this->program = new QOpenGLShaderProgram;
     init_shader(vShaderFile, fShaderFile);
+    hasGeometryShader = false;
+
+    m_vShaderFile = vShaderFile;
+    m_fShaderFile = fShaderFile;
 }
 
 MyShader::MyShader(QString vShaderFile, QString gShaderFile, QString fShaderFile)
 {
     this->program = new QOpenGLShaderProgram;
     init_shader(vShaderFile, gShaderFile, fShaderFile);
+    hasGeometryShader = true;
+
+    m_vShaderFile = vShaderFile;
+    m_fShaderFile = fShaderFile;
+    m_gShaderFile = gShaderFile;
 }
 
 MyShader::~MyShader()
@@ -68,4 +78,15 @@ bool MyShader::AddShader(QString file_name, SHADER_TYPE type)
 
     return true;
 
+}
+
+void MyShader::reLoad()
+{
+    delete this->program;
+    this->program = new QOpenGLShaderProgram;
+    if(hasGeometryShader)
+        init_shader(m_vShaderFile, m_gShaderFile, m_fShaderFile);
+    else
+        init_shader(m_vShaderFile, m_fShaderFile);
+    qDebug() << "reload shader:" << m_vShaderFile << m_gShaderFile << m_fShaderFile;
 }

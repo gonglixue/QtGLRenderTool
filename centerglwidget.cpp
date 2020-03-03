@@ -15,7 +15,7 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     qDebug() << "vertex shader path: " << vShaderFile;
     qDebug() << "fragment shader path: " << fShaderFile;
 
-    lightPos = QVector3D(0, 3.0f, 0.0f);
+    lightPos = QVector3D(1.0, 2.0f, 3.0f);
     objectColor = QVector3D(0.9f, 0.9f, 0.9f);
     lightColor = QVector3D(1.0f, 1.0f, 1.0f);
 
@@ -123,6 +123,8 @@ void CenterGLWidget::initializeGL()
     shader_program = new MyShader(vShaderFile, fShaderFile);
     simple_depth_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.vs",
                                                "F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.frag");
+    shadow_mapping_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/shadow_mapping.vs",
+                                          "F:/Documents/QtProject/QtGLRenderTool/shadow_mapping.frag");
 
     debug_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/debug_quad.vs",
                                         "F:/Documents/QtProject/QtGLRenderTool/debug_quad.frag");
@@ -133,12 +135,16 @@ void CenterGLWidget::initializeGL()
     shadow->initFBO();
     // shadow->initQFBO();
 
+    setShadowLighting();
+}
 
+void CenterGLWidget::setShadowLighting()
+{
     QMatrix4x4 lightOrtho, lightView, lightSpaceMatrixOrtho;
      float near_plane = 1.0f, far_plane = 12.0f;  // TODO: check
     lightOrtho.ortho(-10.0, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 
-    lightView.lookAt(lightPos, QVector3D(0, 0, 0), QVector3D(0, 0, 1));
+    lightView.lookAt(lightPos, QVector3D(0, 0, 0), QVector3D(0, 1, 0));
     lightSpaceMatrixOrtho = lightOrtho * lightView;
 
     simple_depth_shader_program->bind();
@@ -149,6 +155,9 @@ void CenterGLWidget::initializeGL()
     debug_shader_program->setUniformValue("near_plane", near_plane);
     debug_shader_program->setUniformValue("far_plane", far_plane);
 
+    shadow_mapping_program->bind();
+    shadow_mapping_program->setUniformValue("lightSpaceMatrix", lightSpaceMatrixOrtho);
+    shadow_mapping_program->setUniformValue("lightPos", lightPos);
 }
 
 void CenterGLWidget::setupVertexAttribs()
@@ -201,14 +210,27 @@ void CenterGLWidget::paintGL()
 //    simple_depth_shader_program->unbind();
 
 
+//    core->glViewport(0, 0, screenWidth, screenHeight);
+//    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    debug_shader_program->bind();
+//    core->glActiveTexture(GL_TEXTURE0);
+//    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
+//    // quad->draw(GL_TRUE);
+//    renderQuad();
+
     core->glViewport(0, 0, screenWidth, screenHeight);
     core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    debug_shader_program->bind();
+    shadow_mapping_program->bind();
+    shadow_mapping_program->setUniformValue("model", model);
+    shadow_mapping_program->setUniformValue("view", view_mat);
+    shadow_mapping_program->setUniformValue("projection", projection);
+    shadow_mapping_program->setUniformValue("viewPos", camera.Position);
+    shadow_mapping_program->setUniformValue("lightColor", lightColor);
     core->glActiveTexture(GL_TEXTURE0);
     core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
-    // quad->draw(GL_TRUE);
-    renderQuad();
+    renderScenne();
 
+    // get depthmap
     shadow->bindFBO();
     simple_depth_shader_program->bind();
     simple_depth_shader_program->setUniformValue("model", model);
@@ -379,3 +401,9 @@ QVector3D CenterGLWidget::getArcballVector(int x, int y)
     return p;
 }
 
+void CenterGLWidget::reLinkShader()
+{
+    this->shadow_mapping_program->reLoad();
+    setShadowLighting();
+    update();
+}

@@ -47,3 +47,6 @@ FORMS += \
         mainwindow.ui
 
 # LIBS += -lopengl32 -lglu32
+
+RESOURCES += \
+    res.qrc

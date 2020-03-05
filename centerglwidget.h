@@ -29,6 +29,7 @@
 #include "mycamera.h"
 #include "myshader.h"
 #include "texture2d.h"
+#include "littlethings.h"
 
 class CenterGLWidget:public QOpenGLWidget
 {
@@ -84,24 +85,26 @@ private:
 
 
     // Mesh
-    MyMesh mesh;
-    MyMesh plane;
+    MyMesh* mesh;
+    MyMesh* plane;
 
     // transform
     QMatrix4x4 projection;
     QMatrix4x4 model;
 
-    // render config
+    // render environment config
     QVector3D objectColor;
     QVector3D lightColor;
     QVector3D lightPos;
     GLfloat model_scale;
 
-    // shadow map config
-    int SHADOW_WIDTH, SHADOW_HEIGHT;
-    GLuint depthMap, depthMapFBO;
+    // shadow map shader
     MyShader* simple_depth_shader_program;
     MyShader* shadow_mapping_program;
+
+    // little things
+    Shadow *shadow;
+    Coordinate* world_coordinate;
 
     void setupVertexAttribs();
     void renderScenne();
@@ -110,7 +113,7 @@ private:
     // debug
     GLuint quadVBO, quadVAO;
     void renderQuad();
-    MyShader* debug_shader_program;
+    // MyShader* debug_shader_program;
 
 public slots:
     void setXRotation(int angle);

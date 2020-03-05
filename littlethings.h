@@ -5,6 +5,8 @@
 #include <QOpenGLFramebufferObject>
 #include <QVector4D>
 
+#include "myshader.h"
+
 /*
   这个类存储了一些 小玩意，为这些单独小玩意单独建类又好麻烦
   目前这些小玩意有：
@@ -49,10 +51,12 @@ public:
   Coordinate();
   ~Coordinate();
   void init();
-  void draw();
+  void draw(QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection);
 private:
   QOpenGLFunctions_3_3_Core *core;
   GLuint VBO;
+  MyShader* coord_shader_program;
+
 };
 
 /************ 4. ubo类，一个uniform buffer object类 **************/

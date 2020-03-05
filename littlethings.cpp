@@ -138,11 +138,16 @@ void Plane::draw(GLboolean isTexture, GLboolean isNormal){
 /******************* 3. Coordinate 立方体 ***********************/
 Coordinate::Coordinate(): VBO(0){
   core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
+  coord_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/coordinate.vs",
+                                      "F:/Documents/QtProject/QtGLRenderTool/coordinate.frag");
+
 }
 
 Coordinate::~Coordinate(){
   if(VBO != 0)
     core->glDeleteBuffers(1, &VBO);
+  delete this->coord_shader_program;
+  delete core;
 }
 
 void Coordinate::init(){
@@ -150,13 +155,13 @@ void Coordinate::init(){
   float vertices[] = {
       // positions
       0.0f, 0.0f, 0.0f,
-      1.0f, 0.0f, 0.0f,
+      10.0f, 0.0f, 0.0f,
 
       0.0f, 0.0f, 0.0f,
-      0.0f, 1.0f, 0.0f,
+      0.0f, 10.0f, 0.0f,
 
       0.0f, 0.0f, 0.0f,
-      0.0f, 0.0f, 1.0f
+      0.0f, 0.0f, 10.0f
   };
 
   core->glGenBuffers(1, &VBO);
@@ -167,12 +172,18 @@ void Coordinate::init(){
 
 }
 
-void Coordinate::draw(){
-  core->glEnableVertexAttribArray(0);
+void Coordinate::draw(QMatrix4x4 model, QMatrix4x4 view, QMatrix4x4 projection){
+  coord_shader_program->bind();
+  coord_shader_program->setUniformValue("model", model);
+  coord_shader_program->setUniformValue("view", view);
+  coord_shader_program->setUniformValue("projection", projection);
+
   core->glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  core->glEnableVertexAttribArray(0);
   core->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
   core->glDrawArrays(GL_LINES, 0, 6);
+  coord_shader_program->unbind();
 }
 
 /******************* 4. UBufferObject ubo缓冲对象 ***********************/

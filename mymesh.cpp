@@ -29,7 +29,7 @@ MyMesh::MyMesh(std::vector<Vertex> &vertices_in, std::vector<GLuint> &indices_in
     }
 
     has_tex = false;
-    core = NULL;
+    core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
 }
 
 MyMesh::MyMesh(std::vector<Vertex> &vertices_in):max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9)
@@ -57,20 +57,37 @@ MyMesh::MyMesh(std::vector<Vertex> &vertices_in):max_vert(-1e9, -1e9, -1e9), min
     }
 
     has_tex = false;
-    core = NULL;
+    core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
 }
 
 void MyMesh::loadOBJ(QFile& file)
 {
-    qDebug() << "enter MyMesh::LoadOBJ";
+
     this->vertices.clear();
-    if(VAO!=0)
-        core->glDeleteVertexArrays(1, &VAO);
-    if(VBO!=0)
-        core->glDeleteBuffers(1, &VBO);
+    {
+        std::vector<Vertex> tmp = this->vertices;
+        this->vertices.swap(tmp);
+    }
+
+//    core->glBindVertexArray(VAO);
+//    core->glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//    core->glDisableVertexAttribArray(0);
+//    core->glDisableVertexAttribArray(1);
+//    core->glDisableVertexAttribArray(2);
+//    core->glBindBuffer(GL_ARRAY_BUFFER, 0);
+//    core->glBindVertexArray(0);
+
+//    if(VAO!=0)
+//        core->glDeleteVertexArrays(1, &VAO);
+//    if(VBO!=0)
+//        core->glDeleteBuffers(1, &VBO);
+
+
+//    VAO = 0;
+//    VBO = 0;
     max_vert = QVector3D(-1e9, -1e9, -1e9);
     min_vert = QVector3D(1e9, 1e9, 1e9);
-
+    qDebug() << "enter MyMesh::LoadOBJ VAO=" << VAO;
 
     QTextStream in(&file);
 
@@ -180,22 +197,23 @@ void MyMesh::loadOBJ(QFile& file)
         line = in.readLine();
     }
 
-    cout << "load obj count" << vCount << ", " << vnCount;
+
     file.close();
 
     qDebug() << "max vert:" << max_vert;
     qDebug() << "min vert:" << min_vert;
     this->triangles_num_ = this->vertices.size() / 3;
+    qDebug() << "load obj count:" << vnCount << " | triangle=" << triangles_num_;
 
 }
 
 MyMesh::~MyMesh()
 {
-    this->vertices.clear();
     if(VBO !=0 )
         core->glDeleteBuffers(1, &VBO);
     if(VAO !=0)
         core->glDeleteVertexArrays(1, &VAO);
+    delete core;
 }
 
 void MyMesh::normalize(float length, QVector3D& center)
@@ -244,14 +262,20 @@ void MyMesh::UpdatePlaneY(MyMesh &m, float y)
 
 void MyMesh::setUpAttribute()
 {
-    core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
+    qDebug() << "enter setUpAttribute";
+    if(VBO==0)
+        core->glGenBuffers(1, &VBO);
+    if(VAO==0)
+        core->glGenVertexArrays(1, &VAO);
 
-    core->glGenBuffers(1, &VBO);
-    core->glGenVertexArrays(1, &VAO);
     core->glBindVertexArray(VAO);
 
     core->glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    core->glBufferData(GL_ARRAY_BUFFER, this->vertices.size()*sizeof(Vertex), &this->vertices[0], GL_STATIC_DRAW);
+    core->glBufferData(GL_ARRAY_BUFFER, this->vertices.size()*sizeof(Vertex), NULL, GL_STREAM_DRAW);
+//    core->glBufferData(GL_ARRAY_BUFFER, this->vertices.size()*sizeof(Vertex), &this->vertices[0], GL_DYNAMIC_DRAW);
+    void* buf = core->glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+    memcpy(buf, &vertices[0], sizeof(Vertex)*vertices.size());
+
 
     int attrib_location=-1;
     // POSITION
@@ -265,13 +289,15 @@ void MyMesh::setUpAttribute()
     core->glEnableVertexAttribArray(++attrib_location);
     core->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, TexCoords)));
 
+    core->glUnmapBuffer(GL_ARRAY_BUFFER);
+    core->glBindBuffer(GL_ARRAY_BUFFER, 0);
     core->glBindVertexArray(0);
 
 }
 
 void MyMesh::draw()
 {
-    if(VAO != 0)
+    if(VAO != 0 && VBO!=0)
     {
         core->glBindVertexArray(VAO);
         core->glDrawArrays(GL_TRIANGLES, 0, this->vertices.size());

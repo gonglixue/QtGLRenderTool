@@ -38,6 +38,7 @@ void MyShader::init_shader(QString vShaderFile, QString fShaderFile)
     AddShader(vShaderFile, VERTEX_SHADER);
     AddShader(fShaderFile, FRAGMENT_SHADER);
     link();
+    qDebug() << "success to init " << vShaderFile << " | " << fShaderFile;
 }
 
 void MyShader::init_shader(QString vShaderFile, QString gShaderFile, QString fShaderFile)
@@ -46,6 +47,7 @@ void MyShader::init_shader(QString vShaderFile, QString gShaderFile, QString fSh
     AddShader(gShaderFile, GEOMETRY_SHADER);
     AddShader(fShaderFile, FRAGMENT_SHADER);
     link();
+    qDebug() << "success to init " << vShaderFile << " | " << gShaderFile << " | " << fShaderFile;
 }
 
 

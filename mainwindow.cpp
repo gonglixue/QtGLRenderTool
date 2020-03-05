@@ -24,6 +24,7 @@ void MainWindow::LoadOBJ()
                 QString(),
                 tr("OBJ File(*.obj)")
                 );
+    // QString fn = "F:/Documents/QtProject/GLSLQt/OpenGL-in-Qt-with-GLEW/testdata.obj";
     if(!fn.isEmpty()){
         QFile file(fn);
         if(!file.open(QIODevice::ReadOnly)){

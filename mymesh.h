@@ -33,11 +33,11 @@ public:
         has_tex = false;
         loadOBJ(file);
         QVector3D c(.0f, .0f, .0f);
-        core = NULL;
+        core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
     }
     MyMesh():max_vert(-1e9, -1e9, -1e9), min_vert(1e9, 1e9, 1e9){
         has_tex = false;
-        core = NULL;
+        core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
     }
     ~MyMesh();
 

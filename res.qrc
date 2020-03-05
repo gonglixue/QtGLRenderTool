@@ -8,7 +8,6 @@
         <file>debug_quad.vs</file>
         <file>gooch.frag</file>
         <file>gooch.vert</file>
-        <file>res.qrc.autosave</file>
         <file>shadow_mapping.frag</file>
         <file>shadow_mapping.vs</file>
         <file>shadow_mapping_depth.frag</file>

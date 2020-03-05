@@ -48,8 +48,8 @@ FORMS += \
 
 # LIBS += -lopengl32 -lglu32
 
-RESOURCES += \
-    res.qrc
+#RESOURCES += \
+#    res.qrc
 
 DISTFILES += \
     readme.md

@@ -31,8 +31,11 @@ public:
     bool AddShader(QString file_name, SHADER_TYPE type);
 
     bool bind(){
-        if(!program->bind())
+        if(!program->bind()){
             qDebug() << "unable to bind program";
+            return false;
+        }
+        return true;
     }
     void unbind(){
         program->release();
@@ -55,8 +58,11 @@ private:
     QString m_vShaderFile, m_fShaderFile, m_gShaderFile;
 
     bool link(){
-        if(!program->link())
+        if(!program->link()){
             qDebug() << "unable to link shader program\n";
+            return false;
+        }
+        return true;
     }
 };
 

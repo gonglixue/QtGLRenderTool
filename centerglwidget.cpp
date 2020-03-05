@@ -1,9 +1,5 @@
 ﻿#include "centerglwidget.h"
 
-#include "littlethings.h"
-
-Shadow *shadow;
-
 CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QVector3D(0, 0.5f, 5.0f))
 {
     screenHeight = 500;
@@ -15,7 +11,7 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     qDebug() << "vertex shader path: " << vShaderFile;
     qDebug() << "fragment shader path: " << fShaderFile;
 
-    lightPos = QVector3D(1.0, 2.0f, 3.0f);
+    lightPos = QVector3D(0.5, 1.0f, 1.5f);
     objectColor = QVector3D(0.9f, 0.9f, 0.9f);
     lightColor = QVector3D(1.0f, 1.0f, 1.0f);
 
@@ -29,6 +25,75 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     model.rotate(yRotAngle, QVector3D(0, 1, 0));
     model.rotate(zRotAngle, QVector3D(0, 0, 1));
     model.scale(model_scale);
+
+    quadVAO = 0;
+    quadVBO = 0;
+
+}
+
+CenterGLWidget::~CenterGLWidget()
+{
+    cleanup();
+}
+
+void CenterGLWidget::cleanup()
+{
+    makeCurrent();
+    delete shader_program;
+    delete simple_depth_shader_program;
+    delete shadow_mapping_program;
+    delete world_coordinate;
+    delete shadow;
+    delete mesh;
+    delete plane;
+    // delete debug_shader_program;
+    doneCurrent();
+}
+
+void CenterGLWidget::loadMeshFromFile(QFile &file)
+{
+    qDebug() << "begin CenterGLWidget::loadMeshFromFile";
+    this->mesh->loadOBJ(file);
+    QVector3D c(0.0f, 0.0f, 0.3f);
+    this->mesh->normalize(1.0, c);
+
+
+    // update plane y
+    MyMesh::UpdatePlaneY(*plane, this->mesh->MinVert().y());
+    setupVertexAttribs();
+
+
+    update();
+    qDebug() << "reload succesfully";
+}
+
+void CenterGLWidget::initializeGL()
+{
+    qDebug() << "CenterGLWidget Initialize";
+
+    core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
+
+    core->glEnable(GL_DEPTH_TEST);
+    core->glDisable(GL_CULL_FACE);
+    core->glClearColor(0, 0, 0.4f, 1);
+
+    // load obj once program starts
+
+
+    shader_program = new MyShader(vShaderFile, fShaderFile);
+    simple_depth_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.vs",
+                                               "F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.frag");
+    shadow_mapping_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/shadow_mapping.vs",
+                                          "F:/Documents/QtProject/QtGLRenderTool/shadow_mapping.frag");
+
+//    debug_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/debug_quad.vs",
+//                                        "F:/Documents/QtProject/QtGLRenderTool/debug_quad.frag");
+
+
+    /* objects init */
+    shadow = new Shadow();
+    shadow->initFBO();
+    // shadow->initQFBO();
 
     // init plane
     std::vector<Vertex> plane_vertices(6);
@@ -54,54 +119,9 @@ CenterGLWidget::CenterGLWidget(QWidget* parent):QOpenGLWidget(parent), camera(QV
     plane_vertices[4].TexCoords = QVector2D(1.0f, 0.0f);
     plane_vertices[5].TexCoords = QVector2D(1.0f, 1.0f);
 
-    plane = MyMesh(plane_vertices);
-
-    depthMap = 0;
-    depthMapFBO = 0;
-    quadVAO = 0;
-    quadVBO = 0;
-
-}
-
-CenterGLWidget::~CenterGLWidget()
-{
-    cleanup();
-}
-
-void CenterGLWidget::cleanup()
-{
-    makeCurrent();
-    delete shader_program;
-    delete simple_depth_shader_program;
-    delete debug_shader_program;
-    doneCurrent();
-}
-
-void CenterGLWidget::loadMeshFromFile(QFile &file)
-{
-    qDebug() << "begin CenterGLWidget::loadMeshFromFile";
-    this->mesh.loadOBJ(file);
-    QVector3D c(0.0f, 0.0f, 0.3f);
-    this->mesh.normalize(1.0, c);
-
-    // update plane y
-    MyMesh::UpdatePlaneY(plane, this->mesh.MinVert().y());
-
-    setupVertexAttribs();
-    update();
-}
-
-void CenterGLWidget::initializeGL()
-{
-    qDebug() << "CenterGLWidget Initialize";
-
-    core = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
-
-    core->glEnable(GL_DEPTH_TEST);
-    core->glDisable(GL_CULL_FACE);
-    core->glClearColor(0, 0, 0.4f, 1);
-
-    // load obj once program starts
+    plane = new MyMesh(plane_vertices);
+    this->plane->setUpAttribute();
+    mesh = new MyMesh();
     QString fn = QFileDialog::getOpenFileName(
                 this,
                 tr("Open an OBJ Model File"),
@@ -120,22 +140,13 @@ void CenterGLWidget::initializeGL()
         this->loadMeshFromFile(file);
     }
 
-    shader_program = new MyShader(vShaderFile, fShaderFile);
-    simple_depth_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.vs",
-                                               "F:/Documents/QtProject/QtGLRenderTool/shadow_mapping_depth.frag");
-    shadow_mapping_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/shadow_mapping.vs",
-                                          "F:/Documents/QtProject/QtGLRenderTool/shadow_mapping.frag");
 
-    debug_shader_program = new MyShader("F:/Documents/QtProject/QtGLRenderTool/debug_quad.vs",
-                                        "F:/Documents/QtProject/QtGLRenderTool/debug_quad.frag");
-
-
-    /* objects init */
-    shadow = new Shadow();
-    shadow->initFBO();
-    // shadow->initQFBO();
+    world_coordinate = new Coordinate();
+    world_coordinate->init();
 
     setShadowLighting();
+
+    qDebug() << "finish initialGL";
 }
 
 void CenterGLWidget::setShadowLighting()
@@ -150,10 +161,10 @@ void CenterGLWidget::setShadowLighting()
     simple_depth_shader_program->bind();
     simple_depth_shader_program->setUniformValue("lightSpaceMatrix", lightSpaceMatrixOrtho);
 
-    debug_shader_program->bind();
-    debug_shader_program->setUniformValue("depthMap", 0);
-    debug_shader_program->setUniformValue("near_plane", near_plane);
-    debug_shader_program->setUniformValue("far_plane", far_plane);
+//    debug_shader_program->bind();
+//    debug_shader_program->setUniformValue("depthMap", 0);
+//    debug_shader_program->setUniformValue("near_plane", near_plane);
+//    debug_shader_program->setUniformValue("far_plane", far_plane);
 
     shadow_mapping_program->bind();
     shadow_mapping_program->setUniformValue("lightSpaceMatrix", lightSpaceMatrixOrtho);
@@ -162,12 +173,14 @@ void CenterGLWidget::setShadowLighting()
 
 void CenterGLWidget::setupVertexAttribs()
 {
-    this->plane.setUpAttribute();
-    this->mesh.setUpAttribute();
+    this->plane->setUpAttribute();
+    this->mesh->setUpAttribute();
+    qDebug() << "setupVertexAttribs successfully";
 }
 
 void CenterGLWidget::paintGL()
 {
+    qDebug() << "update gl";
     core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     QMatrix4x4 view_mat = this->camera.GetViewMatrix();
@@ -192,58 +205,52 @@ void CenterGLWidget::paintGL()
     }
 
     // 2. render
-//    shader_program->bind();
-//    shader_program->setUniformValue<QMatrix4x4>("model", model);
-//    shader_program->setUniformValue("view", view_mat);
-//    shader_program->setUniformValue("projection", projection);
-//    shader_program->setUniformValue("lightPos", lightPos);
-//    shader_program->setUniformValue("viewPos", camera.Position);
-//    shader_program->setUniformValue("lightColor", lightColor);
-//    shader_program->setUniformValue("objectColor", objectColor);
+    world_coordinate->draw(model, view_mat, projection);
+    shader_program->bind();
+    shader_program->setUniformValue<QMatrix4x4>("model", model);
+    shader_program->setUniformValue("view", view_mat);
+    shader_program->setUniformValue("projection", projection);
+    shader_program->setUniformValue("lightPos", lightPos);
+    shader_program->setUniformValue("viewPos", camera.Position);
+    shader_program->setUniformValue("lightColor", lightColor);
+    shader_program->setUniformValue("objectColor", objectColor);
 
-//    renderScenne();
-//    shader_program->unbind();
-
-//    simple_depth_shader_program->bind();
-//    simple_depth_shader_program->setUniformValue("model", model);
-//    renderScenne();
-//    simple_depth_shader_program->unbind();
-
+    renderScenne();
+    shader_program->unbind();
 
 //    core->glViewport(0, 0, screenWidth, screenHeight);
 //    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    debug_shader_program->bind();
+//    world_coordinate->draw(model, view_mat, projection);
+
+//    shadow_mapping_program->bind();
+//    shadow_mapping_program->setUniformValue("model", model);
+//    shadow_mapping_program->setUniformValue("view", view_mat);
+//    shadow_mapping_program->setUniformValue("projection", projection);
+//    shadow_mapping_program->setUniformValue("viewPos", camera.Position);
+//    shadow_mapping_program->setUniformValue("lightColor", lightColor);
+//    shadow_mapping_program->setUniformValue("kernel_radius", 2);
 //    core->glActiveTexture(GL_TEXTURE0);
 //    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
-//    // quad->draw(GL_TRUE);
-//    renderQuad();
+//    renderScenne();
+//    qDebug() << "   update gl:pass 1";
 
-    core->glViewport(0, 0, screenWidth, screenHeight);
-    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    shadow_mapping_program->bind();
-    shadow_mapping_program->setUniformValue("model", model);
-    shadow_mapping_program->setUniformValue("view", view_mat);
-    shadow_mapping_program->setUniformValue("projection", projection);
-    shadow_mapping_program->setUniformValue("viewPos", camera.Position);
-    shadow_mapping_program->setUniformValue("lightColor", lightColor);
-    core->glActiveTexture(GL_TEXTURE0);
-    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
-    renderScenne();
+//    // off-screen render to get depthmap
+//    shadow->bindFBO();
+//    simple_depth_shader_program->bind();
+//    simple_depth_shader_program->setUniformValue("model", model);
+//    renderScenne();
+//    shadow->releaseFBO();
+//    qDebug() << "   update gl:pass 2";
 
-    // get depthmap
-    shadow->bindFBO();
-    simple_depth_shader_program->bind();
-    simple_depth_shader_program->setUniformValue("model", model);
-    renderScenne();
-    shadow->releaseFBO();
+
 
 
 }
 
 void CenterGLWidget::renderScenne()
 {
-    this->plane.draw();
-    this->mesh.draw();
+    this->plane->draw();
+    this->mesh->draw();
 }
 
 void CenterGLWidget::renderQuad()

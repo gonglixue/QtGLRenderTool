@@ -204,43 +204,43 @@ void CenterGLWidget::paintGL()
         mouseLastPos = mouseCurPos;
     }
 
-    // 2. render
-    world_coordinate->draw(model, view_mat, projection);
-    shader_program->bind();
-    shader_program->setUniformValue<QMatrix4x4>("model", model);
-    shader_program->setUniformValue("view", view_mat);
-    shader_program->setUniformValue("projection", projection);
-    shader_program->setUniformValue("lightPos", lightPos);
-    shader_program->setUniformValue("viewPos", camera.Position);
-    shader_program->setUniformValue("lightColor", lightColor);
-    shader_program->setUniformValue("objectColor", objectColor);
-
-    renderScenne();
-    shader_program->unbind();
-
-//    core->glViewport(0, 0, screenWidth, screenHeight);
-//    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    // 2. render
 //    world_coordinate->draw(model, view_mat, projection);
+//    shader_program->bind();
+//    shader_program->setUniformValue<QMatrix4x4>("model", model);
+//    shader_program->setUniformValue("view", view_mat);
+//    shader_program->setUniformValue("projection", projection);
+//    shader_program->setUniformValue("lightPos", lightPos);
+//    shader_program->setUniformValue("viewPos", camera.Position);
+//    shader_program->setUniformValue("lightColor", lightColor);
+//    shader_program->setUniformValue("objectColor", objectColor);
 
-//    shadow_mapping_program->bind();
-//    shadow_mapping_program->setUniformValue("model", model);
-//    shadow_mapping_program->setUniformValue("view", view_mat);
-//    shadow_mapping_program->setUniformValue("projection", projection);
-//    shadow_mapping_program->setUniformValue("viewPos", camera.Position);
-//    shadow_mapping_program->setUniformValue("lightColor", lightColor);
-//    shadow_mapping_program->setUniformValue("kernel_radius", 2);
-//    core->glActiveTexture(GL_TEXTURE0);
-//    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
 //    renderScenne();
-//    qDebug() << "   update gl:pass 1";
+//    shader_program->unbind();
 
-//    // off-screen render to get depthmap
-//    shadow->bindFBO();
-//    simple_depth_shader_program->bind();
-//    simple_depth_shader_program->setUniformValue("model", model);
-//    renderScenne();
-//    shadow->releaseFBO();
-//    qDebug() << "   update gl:pass 2";
+    core->glViewport(0, 0, screenWidth, screenHeight);
+    core->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    world_coordinate->draw(model, view_mat, projection);
+
+    shadow_mapping_program->bind();
+    shadow_mapping_program->setUniformValue("model", model);
+    shadow_mapping_program->setUniformValue("view", view_mat);
+    shadow_mapping_program->setUniformValue("projection", projection);
+    shadow_mapping_program->setUniformValue("viewPos", camera.Position);
+    shadow_mapping_program->setUniformValue("lightColor", lightColor);
+    shadow_mapping_program->setUniformValue("kernel_radius", 2);
+    core->glActiveTexture(GL_TEXTURE0);
+    core->glBindTexture(GL_TEXTURE_2D, shadow->getDepthMapFBO());
+    renderScenne();
+    qDebug() << "   update gl:pass 1";
+
+    // off-screen render to get depthmap
+    shadow->bindFBO();
+    simple_depth_shader_program->bind();
+    simple_depth_shader_program->setUniformValue("model", model);
+    renderScenne();
+    shadow->releaseFBO();
+    qDebug() << "   update gl:pass 2";
 
 
 
